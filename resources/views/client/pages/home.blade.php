@@ -378,7 +378,8 @@
 <section id="billboard" class="banner-full">
     <div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
 
-        <div class="carousel-indicators">
+        {{-- INDICATORS (Nút tròn nhỏ bên dưới - Cấp z-index: 10 để luôn bấm được) --}}
+        <div class="carousel-indicators" style="z-index: 10;">
             @foreach($banners as $key => $banner)
             <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="{{ $key }}"
                 class="{{ $key == 0 ? 'active' : '' }}"></button>
@@ -396,7 +397,7 @@
                 <div class="banner-overlay"></div>
 
                 {{-- TEXT --}}
-                <div class="banner-content container">
+                <div class="banner-content container position-relative" style="z-index: 2;">
                     <div class="row h-100 align-items-center">
                         <div class="col-md-6 text-white text-center text-md-start">
                             <h2 class="fw-bold display-5 mb-2">
@@ -408,7 +409,7 @@
                             </p>
 
                             <a href="{{ url($banner->link) }}"
-                                class="btn btn-light text-dark fw-bold rounded-pill px-4">
+                                class="btn btn-light text-dark fw-bold rounded-pill px-4 shadow-sm">
                                 Xem ngay <i class="fas fa-arrow-right ms-2"></i>
                             </a>
                         </div>
@@ -419,12 +420,13 @@
             @endforeach
         </div>
 
-        <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon bg-dark rounded-circle p-3"></span>
+        {{-- NÚT QUA TRÁI/PHẢI (Đã fix lỗi bị đè + Ẩn trên điện thoại d-none d-md-flex) --}}
+        <button class="carousel-control-prev d-none d-md-flex" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev" style="z-index: 10; width: 10%;">
+            <span class="carousel-control-prev-icon bg-dark rounded-circle p-3 shadow-sm"></span>
         </button>
 
-        <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon bg-dark rounded-circle p-3"></span>
+        <button class="carousel-control-next d-none d-md-flex" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next" style="z-index: 10; width: 10%;">
+            <span class="carousel-control-next-icon bg-dark rounded-circle p-3 shadow-sm"></span>
         </button>
 
     </div>
@@ -444,16 +446,16 @@
             </div>
         </div>
 
-        <div class="swiper flashSaleSwiper">
+        <div class="swiper flashSaleSwiper pb-3">
             <div class="swiper-wrapper py-2">
                 @foreach($saleBooks as $book)
                 @if($book->sale_price > 0 && $book->sale_price < $book->price)
                     <div class="swiper-slide h-auto">
-                        <div class="card h-100 shadow-sm position-relative bg-white border-0 hover-card">
+                        <div class="card h-100 shadow-sm position-relative bg-white border-0 hover-card rounded-4">
 
                             {{-- LOGIC PHÂN LOẠI TAGS --}}
                             @php
-                            $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
+                                $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
                                 $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
                                 $isNew = $book->created_at && $book->created_at > now()->subDays(7);
                                 $isEbook = $book->ebook_price > 0;
@@ -461,62 +463,62 @@
                                 // LOGIC TÍNH SAO ĐÁNH GIÁ
                                 $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
                                 $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
-                                @endphp
+                            @endphp
 
-                                {{-- BỘ TAGS XẾP DỌC (Trái) --}}
-                                <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
-                                    @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
-                                    @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
-                                    @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
+                            {{-- BỘ TAGS XẾP DỌC (Trái) --}}
+                            <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
+                                @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
+                                @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
+                                @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
+                            </div>
+
+                            <a href="{{ route('book.detail', $book->id) }}" class="overflow-hidden rounded-top-4">
+                                <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
+                            </a>
+
+                            <div class="card-body p-2 d-flex flex-column">
+                                <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                    <a href="{{ route('book.detail', $book->id) }}" class="book-title text-decoration-none text-dark fw-bold">{{ $book->title }}</a>
+                                </h6>
+                                <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
+
+                                {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
+                                <div class="mb-2" style="min-height: 18px;">
+                                    @if($reviewCount > 0)
+                                    <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
+                                        <div class="me-1">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
+                                                @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
+                                                @else <i class="far fa-star text-muted opacity-25"></i> @endif
+                                            @endfor
+                                        </div>
+                                        <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
+                                    </div>
+                                    @else
+                                    <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
+                                    @endif
                                 </div>
 
-                                <a href="{{ route('book.detail', $book->id) }}">
-                                    <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
-                                </a>
-
-                                <div class="card-body p-2 d-flex flex-column">
-                                    <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                        <a href="{{ route('book.detail', $book->id) }}" class="book-title text-decoration-none text-dark fw-bold">{{ $book->title }}</a>
-                                    </h6>
-                                    <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
-
-                                    {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
-                                    <div class="mb-2" style="min-height: 18px;">
-                                        @if($reviewCount > 0)
-                                        <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
-                                            <div class="me-1">
-                                                @for($i = 1; $i <= 5; $i++)
-                                                    @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
-                                                    @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
-                                                    @else <i class="far fa-star text-muted opacity-25"></i> @endif
-                                                    @endfor
-                                            </div>
-                                            <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
-                                        </div>
-                                        @else
-                                        <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
-                                        @endif
+                                <div class="mt-auto">
+                                    <div class="price-box d-flex flex-column justify-content-end mb-2" style="min-height: 38px;">
+                                        <span class="text-danger fw-bold" style="font-size: 16px; line-height: 1.2;">{{ number_format($book->sale_price) }}đ</span>
+                                        <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
                                     </div>
 
-                                    <div class="mt-auto">
-                                        <div class="price-box d-flex flex-column justify-content-end mb-2" style="min-height: 38px;">
-                                            <span class="text-danger fw-bold" style="font-size: 16px; line-height: 1.2;">{{ number_format($book->sale_price) }}đ</span>
-                                            <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
-                                        </div>
-
-                                        {{-- Progress Bar Lượt Bán --}}
-                                        <div class="progress" style="height: 5px;">
-                                            <div class="progress-bar bg-danger" style="width: {{ rand(50, 90) }}%"></div>
-                                        </div>
-                                        <small class="text-danger fw-bold d-block mt-1" style="font-size: 0.75rem;">
-                                            🔥 Đã bán: {{ number_format($book->total_sold ?? 0) }}
-                                        </small>
+                                    {{-- Progress Bar Lượt Bán --}}
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar bg-danger" style="width: {{ rand(50, 90) }}%"></div>
                                     </div>
+                                    <small class="text-danger fw-bold d-block mt-1" style="font-size: 0.75rem;">
+                                        🔥 Đã bán: {{ number_format($book->total_sold ?? 0) }}
+                                    </small>
                                 </div>
+                            </div>
                         </div>
                     </div>
-                    @endif
-                    @endforeach
+                @endif
+                @endforeach
             </div>
         </div>
     </div>
@@ -536,218 +538,44 @@
             </div>
         </div>
 
-        <div class="swiper bestSellerSwiper">
+        <div class="swiper bestSellerSwiper pb-3">
             <div class="swiper-wrapper py-2">
                 @foreach($bestSellingBooks as $index => $book)
                 <div class="swiper-slide h-auto">
-                    <div class="card h-100 border-0 shadow-sm position-relative hover-card">
+                    <div class="card h-100 border-0 shadow-sm position-relative hover-card rounded-4">
 
                         @php
-                        $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
+                            $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
                             $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
                             $isNew = $book->created_at && $book->created_at > now()->subDays(7);
                             $isEbook = $book->ebook_price > 0;
 
                             $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
                             $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
-                            @endphp
-
-                            {{-- Huy hiệu TOP nằm góc TRÁI --}}
-                            <div class="position-absolute top-0 start-0 m-1 z-3">
-                                @if($index == 0) <span class="badge rounded-pill shadow bg-warning text-dark">TOP 1</span>
-                                @elseif($index == 1) <span class="badge rounded-pill shadow bg-secondary">TOP 2</span>
-                                @elseif($index == 2) <span class="badge rounded-pill shadow" style="background: #CD7F32;">TOP 3</span>
-                                @else <span class="badge rounded-pill bg-dark">#{{ $index+1 }}</span> @endif
-                            </div>
-
-                            {{-- BỘ TAGS XẾP DỌC NẰM GÓC PHẢI --}}
-                            <div class="position-absolute top-0 end-0 m-2 z-1 d-flex flex-column gap-1 align-items-end">
-                                @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
-                                @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
-                                @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
-                            </div>
-
-                            <a href="{{ route('book.detail', $book->id) }}">
-                                <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
-                            </a>
-
-                            <div class="card-body p-2 d-flex flex-column">
-                                <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                    <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold">{{ $book->title }}</a>
-                                </h6>
-                                <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
-
-                                {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
-                                <div class="mb-2" style="min-height: 18px;">
-                                    @if($reviewCount > 0)
-                                    <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
-                                        <div class="me-1">
-                                            @for($i = 1; $i <= 5; $i++)
-                                                @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
-                                                @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
-                                                @else <i class="far fa-star text-muted opacity-25"></i> @endif
-                                                @endfor
-                                        </div>
-                                        <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
-                                    </div>
-                                    @else
-                                    <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
-                                    @endif
-                                </div>
-
-                                <div class="mt-auto">
-                                    <div class="price-box d-flex flex-column justify-content-end" style="min-height: 38px;">
-                                        @if($isSale)
-                                        <span class="text-danger fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->sale_price) }}đ</span>
-                                        <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
-                                        @else
-                                        <span class="text-dark fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
-                                        @endif
-                                    </div>
-
-                                    <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center">
-                                        <small class="text-muted" style="font-size: 11px;">Đã bán: <b class="text-dark">{{ number_format($book->total_sold ?? 0) }}</b></small>
-                                    </div>
-                                </div>
-                            </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-</section>
-@endif
-
-{{-- 🔥 SECTION 3: TỦ SÁCH ĐIỆN TỬ (EBOOK) 🔥 --}}
-@if(isset($ebooks) && $ebooks->count() > 0)
-<section id="ebooks" class="py-5" style="background-color: #f0f8ff;">
-    <div class="container">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 border-bottom border-primary pb-2 gap-3">
-            <h3 class="fw-bold text-primary mb-0"><i class="fas fa-tablet-alt me-2"></i> KHO SÁCH EBOOK</h3>
-            <div class="d-flex gap-2 align-items-center align-self-end align-self-md-auto">
-                <a href="{{ route('ebooks') }}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold me-md-2">Xem tất cả</a>
-                <div class="swiper-button-prev btn-ebook-prev position-static m-0 d-none d-md-flex"></div>
-                <div class="swiper-button-next btn-ebook-next position-static m-0 d-none d-md-flex"></div>
-            </div>
-        </div>
-
-        <div class="swiper ebookSwiper">
-            <div class="swiper-wrapper py-2">
-                @foreach($ebooks as $book)
-                <div class="swiper-slide h-auto">
-                    <div class="card h-100 shadow-sm position-relative border-0 hover-card">
-
-                        @php
-                        $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
-                            $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
-                            $isNew = $book->created_at && $book->created_at > now()->subDays(7);
-
-                            $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
-                            $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
-                            @endphp
-
-                            {{-- BỘ TAGS XẾP DỌC (Trái) --}}
-                            <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
-                                <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-file-pdf me-1"></i>Ebook</span>
-                                @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
-                                @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
-                            </div>
-
-                            <a href="{{ route('book.detail', $book->id) }}">
-                                <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
-                            </a>
-
-                            <div class="card-body p-2 d-flex flex-column">
-                                <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                    <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold">{{ $book->title }}</a>
-                                </h6>
-                                <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
-
-                                {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
-                                <div class="mb-2" style="min-height: 18px;">
-                                    @if($reviewCount > 0)
-                                    <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
-                                        <div class="me-1">
-                                            @for($i = 1; $i <= 5; $i++)
-                                                @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
-                                                @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
-                                                @else <i class="far fa-star text-muted opacity-25"></i> @endif
-                                                @endfor
-                                        </div>
-                                        <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
-                                    </div>
-                                    @else
-                                    <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
-                                    @endif
-                                </div>
-
-                                <div class="mt-auto">
-                                    <div class="price-box d-flex flex-column justify-content-end" style="min-height: 38px;">
-                                        <span class="text-primary fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->ebook_price) }}đ</span>
-                                        @if($book->price > 0)
-                                        <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">Gốc: {{ number_format($book->price) }}đ</span>
-                                        @endif
-                                    </div>
-
-                                    <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center">
-                                        <small class="text-muted" style="font-size: 11px;">Đã bán: <b class="text-primary">{{ number_format($book->ebook_sold ?? 0) }}</b></small>
-                                    </div>
-                                </div>
-                            </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-</section>
-@endif
-
-{{-- 🔥 SECTION 4: TOÀN BỘ GIAN HÀNG 🔥 --}}
-@if(isset($allBooks) && $allBooks->count() > 0)
-<section id="all-books" class="py-5" style="background-color: #f8f9fa;">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h3 class="fw-bold text-dark text-uppercase" style="letter-spacing: 2px;">
-                <i class="fas fa-store me-2 text-primary"></i> Gian Hàng Thelwc
-            </h3>
-            <p class="text-muted">Khám phá kho tàng tri thức phong phú</p>
-            <div style="width: 50px; height: 3px; background: #0d6efd; margin: 0 auto; border-radius: 10px;"></div>
-        </div>
-
-        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
-            @foreach($allBooks as $book)
-            <div class="col d-flex">
-                <div class="card w-100 shadow-sm border-0 position-relative hover-card">
-
-                    @php
-                    $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
-                        $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
-                        $isNew = $book->created_at && $book->created_at > now()->subDays(7);
-                        $isEbook = $book->ebook_price > 0;
-
-                        $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
-                        $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
                         @endphp
 
-                        {{-- BỘ TAGS XẾP DỌC (Trái) --}}
-                        <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
+                        {{-- Huy hiệu TOP nằm góc TRÁI --}}
+                        <div class="position-absolute top-0 start-0 m-1 z-3">
+                            @if($index == 0) <span class="badge rounded-pill shadow bg-warning text-dark">TOP 1</span>
+                            @elseif($index == 1) <span class="badge rounded-pill shadow bg-secondary">TOP 2</span>
+                            @elseif($index == 2) <span class="badge rounded-pill shadow" style="background: #CD7F32;">TOP 3</span>
+                            @else <span class="badge rounded-pill bg-dark">#{{ $index+1 }}</span> @endif
+                        </div>
+
+                        {{-- BỘ TAGS XẾP DỌC NẰM GÓC PHẢI --}}
+                        <div class="position-absolute top-0 end-0 m-2 z-1 d-flex flex-column gap-1 align-items-end">
                             @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
                             @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
                             @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
                         </div>
 
-                        <a href="{{ route('book.detail', $book->id) }}">
-                            <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}"
-                                class="card-img-custom rounded-top" loading="lazy" alt="{{ $book->title }}">
+                        <a href="{{ route('book.detail', $book->id) }}" class="overflow-hidden rounded-top-4">
+                            <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
                         </a>
 
                         <div class="card-body p-2 d-flex flex-column">
                             <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold" title="{{ $book->title }}">
-                                    {{ $book->title }}
-                                </a>
+                                <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold">{{ $book->title }}</a>
                             </h6>
                             <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
 
@@ -760,7 +588,7 @@
                                             @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
                                             @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
                                             @else <i class="far fa-star text-muted opacity-25"></i> @endif
-                                            @endfor
+                                        @endfor
                                     </div>
                                     <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
                                 </div>
@@ -784,6 +612,267 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- 🔥 SECTION 3: TỦ SÁCH ĐIỆN TỬ (EBOOK) 🔥 --}}
+@if(isset($ebooks) && $ebooks->count() > 0)
+<section id="ebooks" class="py-5" style="background-color: #f0f8ff;">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 border-bottom border-primary pb-2 gap-3">
+            <h3 class="fw-bold text-primary mb-0"><i class="fas fa-tablet-alt me-2"></i> KHO SÁCH EBOOK</h3>
+            <div class="d-flex gap-2 align-items-center align-self-end align-self-md-auto">
+                <a href="{{ route('ebooks') }}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold me-md-2">Xem tất cả</a>
+                <div class="swiper-button-prev btn-ebook-prev position-static m-0 d-none d-md-flex"></div>
+                <div class="swiper-button-next btn-ebook-next position-static m-0 d-none d-md-flex"></div>
+            </div>
+        </div>
+
+        <div class="swiper ebookSwiper pb-3">
+            <div class="swiper-wrapper py-2">
+                @foreach($ebooks as $book)
+                <div class="swiper-slide h-auto">
+                    <div class="card h-100 shadow-sm position-relative border-0 hover-card rounded-4">
+
+                        @php
+                            $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
+                            $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
+                            $isNew = $book->created_at && $book->created_at > now()->subDays(7);
+
+                            $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
+                            $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
+                        @endphp
+
+                        {{-- BỘ TAGS XẾP DỌC (Trái) --}}
+                        <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
+                            <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-file-pdf me-1"></i>Ebook</span>
+                            @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
+                            @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
+                        </div>
+
+                        <a href="{{ route('book.detail', $book->id) }}" class="overflow-hidden rounded-top-4">
+                            <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
+                        </a>
+
+                        <div class="card-body p-2 d-flex flex-column">
+                            <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold">{{ $book->title }}</a>
+                            </h6>
+                            <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
+
+                            {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
+                            <div class="mb-2" style="min-height: 18px;">
+                                @if($reviewCount > 0)
+                                <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
+                                    <div class="me-1">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
+                                            @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
+                                            @else <i class="far fa-star text-muted opacity-25"></i> @endif
+                                        @endfor
+                                    </div>
+                                    <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
+                                </div>
+                                @else
+                                <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
+                                @endif
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="price-box d-flex flex-column justify-content-end" style="min-height: 38px;">
+                                    <span class="text-primary fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->ebook_price) }}đ</span>
+                                    @if($book->price > 0)
+                                    <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">Gốc: {{ number_format($book->price) }}đ</span>
+                                    @endif
+                                </div>
+
+                                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center">
+                                    <small class="text-muted" style="font-size: 11px;">Đã bán: <b class="text-primary">{{ number_format($book->ebook_sold ?? 0) }}</b></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- 🔥 SECTION 4: SÁCH MỚI PHÁT HÀNH 🔥 --}}
+@if(isset($newBooks) && $newBooks->count() > 0)
+<section id="new-arrivals" class="py-5 bg-white">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 border-bottom pb-2 gap-3">
+            <h3 class="fw-bold text-dark mb-0"><i class="fas fa-leaf text-success me-2"></i> SÁCH MỚI PHÁT HÀNH</h3>
+            <div class="d-flex gap-2 align-items-center align-self-end align-self-md-auto">
+                <div class="swiper-button-prev btn-new-prev position-static m-0 d-none d-md-flex"></div>
+                <div class="swiper-button-next btn-new-next position-static m-0 d-none d-md-flex"></div>
+                <a href="{{ route('new.arrivals') }}" class="btn btn-outline-dark btn-sm rounded-pill fw-bold">Xem tất cả</a>
+            </div>
+        </div>
+
+        <div class="swiper newArrivalsSwiper pb-3">
+            <div class="swiper-wrapper py-2">
+                @foreach($newBooks as $book)
+                <div class="swiper-slide h-auto">
+                    <div class="card h-100 border-0 shadow-sm position-relative hover-card rounded-4">
+
+                        @php
+                            $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
+                            $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
+                            $isEbook = $book->ebook_price > 0;
+
+                            $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
+                            $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
+                        @endphp
+
+                        {{-- BỘ TAGS XẾP DỌC (Trái) --}}
+                        <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
+                            <span class="badge bg-success shadow-sm px-2 py-1">Mới</span>
+                            @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
+                            @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
+                        </div>
+
+                        <a href="{{ route('book.detail', $book->id) }}" class="overflow-hidden rounded-top-4">
+                            <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" loading="lazy" class="card-img-custom rounded-top">
+                        </a>
+
+                        <div class="card-body p-2 d-flex flex-column">
+                            <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold">{{ $book->title }}</a>
+                            </h6>
+                            <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
+
+                            {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
+                            <div class="mb-2" style="min-height: 18px;">
+                                @if($reviewCount > 0)
+                                <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
+                                    <div class="me-1">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
+                                            @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
+                                            @else <i class="far fa-star text-muted opacity-25"></i> @endif
+                                        @endfor
+                                    </div>
+                                    <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
+                                </div>
+                                @else
+                                <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
+                                @endif
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="price-box d-flex flex-column justify-content-end" style="min-height: 38px;">
+                                    @if($isSale)
+                                    <span class="text-danger fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->sale_price) }}đ</span>
+                                    <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
+                                    @else
+                                    <span class="text-dark fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
+                                    @endif
+                                </div>
+
+                                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center">
+                                    <small class="text-muted" style="font-size: 11px;">Đã bán: <b class="text-dark">{{ number_format($book->total_sold ?? 0) }}</b></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- 🔥 SECTION 5: TOÀN BỘ GIAN HÀNG 🔥 --}}
+@if(isset($allBooks) && $allBooks->count() > 0)
+<section id="all-books" class="py-5" style="background-color: #f8f9fa;">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h3 class="fw-bold text-dark text-uppercase" style="letter-spacing: 2px;">
+                <i class="fas fa-store me-2 text-primary"></i> Gian Hàng Thelwc
+            </h3>
+            <p class="text-muted">Khám phá kho tàng tri thức phong phú</p>
+            <div style="width: 50px; height: 3px; background: #0d6efd; margin: 0 auto; border-radius: 10px;"></div>
+        </div>
+
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3">
+            @foreach($allBooks as $book)
+            <div class="col d-flex">
+                <div class="card w-100 shadow-sm border-0 position-relative hover-card rounded-4">
+
+                    @php
+                        $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
+                        $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
+                        $isNew = $book->created_at && $book->created_at > now()->subDays(7);
+                        $isEbook = $book->ebook_price > 0;
+
+                        $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
+                        $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
+                    @endphp
+
+                    {{-- BỘ TAGS XẾP DỌC (Trái) --}}
+                    <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
+                        @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
+                        @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
+                        @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
+                    </div>
+
+                    <a href="{{ route('book.detail', $book->id) }}" class="overflow-hidden rounded-top-4">
+                        <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}"
+                             class="card-img-custom" loading="lazy" alt="{{ $book->title }}">
+                    </a>
+
+                    <div class="card-body p-2 d-flex flex-column">
+                        <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold" title="{{ $book->title }}">
+                                {{ $book->title }}
+                            </a>
+                        </h6>
+                        <small class="text-muted mb-1 text-truncate d-block" style="font-size: 12px;">{{ $book->author ?? 'Đang cập nhật' }}</small>
+
+                        {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
+                        <div class="mb-2" style="min-height: 18px;">
+                            @if($reviewCount > 0)
+                            <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
+                                <div class="me-1">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <=floor($avgRating)) <i class="fas fa-star"></i>
+                                        @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
+                                        @else <i class="far fa-star text-muted opacity-25"></i> @endif
+                                    @endfor
+                                </div>
+                                <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
+                            </div>
+                            @else
+                            <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
+                            @endif
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="price-box d-flex flex-column justify-content-end" style="min-height: 38px;">
+                                @if($isSale)
+                                <span class="text-danger fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->sale_price) }}đ</span>
+                                <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
+                                @else
+                                <span class="text-dark fw-bold" style="font-size: 15px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
+                                @endif
+                            </div>
+
+                            <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center">
+                                <small class="text-muted" style="font-size: 11px;">Đã bán: <b class="text-dark">{{ number_format($book->total_sold ?? 0) }}</b></small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             @endforeach
@@ -796,6 +885,7 @@
         </div>
     </div>
 </section>
+@endif
 
 {{-- 🔥 SECTION: TIN TỨC MỚI NHẤT 🔥 --}}
 @if(isset($latestPosts) && $latestPosts->count() > 0)
@@ -846,84 +936,76 @@
     </div>
 </section>
 @endif
-@endif
 @endsection
 
+{{-- 🔥 ĐOẠN SCRIPT CHUẨN HÓA SWIPER (ĐÃ KẾT HỢP AUTOPLAY) 🔥 --}}
 @section('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Cấu hình chung cho các Slider
+        // Cấu hình chung cho tất cả các Slider
         const commonConfig = {
-            slidesPerView: 1.15,
+            // Mặc định màn hình điện thoại nhỏ nhất (< 640px)
+            slidesPerView: 2, 
             spaceBetween: 12,
-            loop: true,
+            loop: true, // Cho phép trượt vòng tròn
             autoplay: {
-                delay: 3000,
-                disableOnInteraction: false,
+                delay: 3500, // Tự trượt sau 3.5 giây
+                disableOnInteraction: false, // Người dùng chạm vào xong vẫn tự trượt tiếp
             },
             breakpoints: {
+                // Tablet dọc
                 640: {
-                    slidesPerView: 2,
-                    spaceBetween: 20
+                    slidesPerView: 3,
+                    spaceBetween: 15
                 },
+                // Tablet ngang & Laptop nhỏ
                 768: {
                     slidesPerView: 4,
                     spaceBetween: 20
                 },
+                // Desktop lớn (Khớp với row-cols-lg-5 của HTML)
                 1024: {
-                    slidesPerView: 6,
+                    slidesPerView: 5,
                     spaceBetween: 20
-                },
+                }
             }
         };
 
-        // 1. Slider Deal Sốc
-        new Swiper(".flashSaleSwiper", {
-            ...commonConfig,
-            navigation: {
-                nextEl: ".btn-sale-next",
-                prevEl: ".btn-sale-prev"
-            },
-        });
+        // 1. Slider Deal Sốc (Trượt nhanh hơn xíu để tạo cảm giác gấp gáp)
+        if(document.querySelector('.flashSaleSwiper')) {
+            new Swiper(".flashSaleSwiper", {
+                ...commonConfig,
+                autoplay: { delay: 3000, disableOnInteraction: false },
+                navigation: { nextEl: ".btn-sale-next", prevEl: ".btn-sale-prev" }
+            });
+        }
 
         // 2. Slider Sách Bán Chạy
-        new Swiper(".bestSellerSwiper", {
-            ...commonConfig,
-            autoplay: {
-                delay: 4000,
-                disableOnInteraction: false
-            },
-            navigation: {
-                nextEl: ".btn-best-next",
-                prevEl: ".btn-best-prev"
-            },
-        });
+        if(document.querySelector('.bestSellerSwiper')) {
+            new Swiper(".bestSellerSwiper", {
+                ...commonConfig,
+                autoplay: { delay: 4000, disableOnInteraction: false },
+                navigation: { nextEl: ".btn-best-next", prevEl: ".btn-best-prev" }
+            });
+        }
 
         // 3. Slider EBOOK
-        new Swiper(".ebookSwiper", {
-            ...commonConfig,
-            autoplay: {
-                delay: 4500,
-                disableOnInteraction: false
-            },
-            navigation: {
-                nextEl: ".btn-ebook-next",
-                prevEl: ".btn-ebook-prev"
-            },
-        });
+        if(document.querySelector('.ebookSwiper')) {
+            new Swiper(".ebookSwiper", {
+                ...commonConfig,
+                autoplay: { delay: 4500, disableOnInteraction: false },
+                navigation: { nextEl: ".btn-ebook-next", prevEl: ".btn-ebook-prev" }
+            });
+        }
 
         // 4. Slider Sách Mới
-        new Swiper(".newArrivalsSwiper", {
-            ...commonConfig,
-            autoplay: {
-                delay: 3500,
-                disableOnInteraction: false
-            },
-            navigation: {
-                nextEl: ".btn-new-next",
-                prevEl: ".btn-new-prev"
-            },
-        });
+        if(document.querySelector('.newArrivalsSwiper')) {
+            new Swiper(".newArrivalsSwiper", {
+                ...commonConfig,
+                autoplay: { delay: 3500, disableOnInteraction: false },
+                navigation: { nextEl: ".btn-new-next", prevEl: ".btn-new-prev" }
+            });
+        }
     });
 </script>
 @endsection

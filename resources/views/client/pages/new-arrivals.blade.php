@@ -7,19 +7,23 @@
 @section('content')
 
 <style>
-    /* CSS Giao diện Fahasa nhỏ gọn */
+    /* CSS Giao diện Card hiện đại đồng bộ */
     .card-img-custom {
-        width: 100%; height: 200px; object-fit: contain;
-        padding: 8px; margin: 0 auto;
+        width: 100%; 
+        aspect-ratio: 2 / 3; /* Tỉ lệ vàng bìa sách */
+        object-fit: cover;
+        border-radius: 12px 12px 0 0;
+        background-color: #f8f9fa;
     }
-    .card { border: 1px solid #eee !important; transition: all 0.3s ease; }
-    .card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important; transform: translateY(-3px); border-color: #0dcaf0 !important; }
-    
-    .book-title {
-        font-size: 14px; font-weight: 600; line-height: 1.4; height: 40px;
-        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: #333;
+    .hover-card { 
+        border: 1px solid #eee !important; 
+        transition: all 0.3s ease; 
     }
-    .price-text { font-size: 16px; color: #C92127; font-weight: 700; }
+    .hover-card:hover { 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important; 
+        transform: translateY(-5px); 
+        border-color: #0dcaf0 !important; /* Viền xanh khi hover hợp theme Sách Mới */
+    }
     
     /* Header riêng cho trang New (Màu Xanh Mát Mẻ) */
     .new-header {
@@ -32,9 +36,9 @@
 </style>
 
 {{-- HEADER TRANG --}}
-<div class="new-header text-center">
+<div class="new-header text-center shadow-sm">
     <h1 class="fw-bold animate__animated animate__fadeInDown">✨ SÁCH MỚI VỀ ✨</h1>
-    <p class="fs-5 opacity-75">Cập nhật những đầu sách nóng hổi nhất trong 7 ngày qua</p>
+    <p class="fs-5 opacity-75 mb-0">Cập nhật những đầu sách nóng hổi nhất trong 7 ngày qua</p>
 </div>
 
 <div class="container pb-5">
@@ -44,40 +48,92 @@
             <i class="fas fa-box-open fa-4x text-muted mb-3 opacity-50"></i>
             <h3>Tuần này chưa có sách mới!</h3>
             <p class="text-muted">Đội ngũ Thelwc đang nhập hàng, bạn quay lại sau nhé.</p>
-            <a href="{{ route('shop') }}" class="btn btn-outline-primary rounded-pill">Xem tất cả sách</a>
+            <a href="{{ route('shop') }}" class="btn btn-primary rounded-pill px-4 mt-2">Khám phá kho sách</a>
         </div>
     @else
-        {{-- LƯỚI SẢN PHẨM --}}
+        {{-- LƯỚI SẢN PHẨM: 2 Cột (Mobile) - 4 Cột (Tablet) - 5 Cột (Desktop) --}}
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3">
             @foreach($books as $book)
-            <div class="col">
-                <div class="card h-100 border-0 shadow-sm position-relative">
-                    {{-- Badge NEW màu xanh --}}
-                    <span class="position-absolute top-0 end-0 badge bg-info text-dark m-2 shadow fw-bold" style="font-size: 10px;">
-                        NEW <i class="fas fa-star text-white ms-1"></i>
-                    </span>
+            
+            {{-- 🔥 LOGIC PHÂN LOẠI TAGS & ĐÁNH GIÁ 🔥 --}}
+            @php 
+                $isSale = $book->sale_price > 0 && $book->sale_price < $book->price;
+                $percent = $isSale ? round((($book->price - $book->sale_price)/$book->price)*100) : 0;
+                $isNew = true; // Chắc chắn là mới vì đang ở trang Sách Mới
+                $isEbook = $book->ebook_price > 0;
+                
+                // Tính Sao đánh giá
+                $avgRating = $book->reviews_avg_rating ?? ($book->reviews ? $book->reviews->avg('rating') : 0);
+                $reviewCount = $book->reviews_count ?? ($book->reviews ? $book->reviews->count() : 0);
+            @endphp
+            
+            <div class="col d-flex">
+                <div class="card w-100 h-100 border-0 shadow-sm position-relative hover-card rounded-4">
+                    
+                    {{-- BỘ TAGS XẾP DỌC (Góc trái) --}}
+                    <div class="position-absolute top-0 start-0 m-2 z-1 d-flex flex-column gap-1 align-items-start">
+                        @if($isNew) <span class="badge bg-success shadow-sm px-2 py-1">Mới</span> @endif
+                        @if($isSale) <span class="badge bg-danger shadow-sm px-2 py-1">-{{ $percent }}%</span> @endif
+                        @if($isEbook) <span class="badge bg-primary shadow-sm px-2 py-1"><i class="fas fa-tablet-alt me-1"></i>Ebook</span> @endif
+                    </div>
 
-                    <a href="{{ route('book.detail', $book->id) }}">
-                        <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" class="card-img-custom rounded-top">
+                    {{-- Ảnh --}}
+                    <a href="{{ route('book.detail', $book->id) }}" class="overflow-hidden rounded-top-4">
+                        <img src="{{ asset($book->image ? (str_contains($book->image, 'uploads') ? $book->image : 'uploads/'.$book->image) : 'https://via.placeholder.com/300x450') }}" class="card-img-custom" alt="{{ $book->title }}" loading="lazy">
                     </a>
                     
-                    <div class="card-body p-2 d-flex flex-column">
-                        <h6 class="mb-1"><a href="{{ route('book.detail', $book->id) }}" class="book-title text-decoration-none">{{ $book->title }}</a></h6>
-                        <p class="text-muted small mb-1 text-truncate">{{ $book->author }}</p>
+                    <div class="card-body p-2 p-md-3 d-flex flex-column">
+                        {{-- Tên sách --}}
+                        <h6 class="mb-1" style="font-size: 14px; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">
+                            <a href="{{ route('book.detail', $book->id) }}" class="text-dark text-decoration-none fw-bold" title="{{ $book->title }}">
+                                {{ $book->title }}
+                            </a>
+                        </h6>
                         
-                        <div class="mt-auto">
-                            @if($book->sale_price && $book->sale_price < $book->price)
-                                <div class="d-flex flex-column">
-                                    <span class="price-text">{{ number_format($book->sale_price) }}đ</span>
-                                    <small class="text-decoration-line-through text-muted" style="font-size: 11px">{{ number_format($book->price) }}đ</small>
+                        {{-- Tác giả & Thể loại --}}
+                        <div class="mb-2">
+                            <small class="text-muted d-block text-truncate mb-1" style="font-size: 12px;"><i class="fas fa-pen-nib text-xs me-1"></i> {{ $book->author ?? 'Đang cập nhật' }}</small>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px;">{{ $book->category->name ?? 'Chưa phân loại' }}</span>
+                        </div>
+
+                        {{-- HIỂN THỊ SAO ĐÁNH GIÁ --}}
+                        <div class="mb-2" style="min-height: 18px;">
+                            @if($reviewCount > 0)
+                                <div class="text-warning d-flex align-items-center" style="font-size: 11px;">
+                                    <div class="me-1">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <= floor($avgRating)) <i class="fas fa-star"></i>
+                                            @elseif($i == ceil($avgRating) && $avgRating - floor($avgRating) > 0) <i class="fas fa-star-half-alt"></i>
+                                            @else <i class="far fa-star text-muted opacity-25"></i> @endif
+                                        @endfor
+                                    </div>
+                                    <span class="text-dark fw-bold" style="font-size: 10px;">({{ round($avgRating, 1) }})</span>
                                 </div>
                             @else
-                                <span class="price-text">{{ number_format($book->price) }}đ</span>
+                                <span class="text-muted fst-italic" style="font-size: 11px;">Chưa có đánh giá</span>
                             @endif
+                        </div>
+                        
+                        <div class="mt-auto">
+                            {{-- Cụm Giá tiền --}}
+                            <div class="d-flex flex-column justify-content-end mb-2" style="min-height: 38px;">
+                                @if($isSale)
+                                    <span class="text-danger fw-bold" style="font-size: 16px; line-height: 1.2;">{{ number_format($book->sale_price) }}đ</span>
+                                    <span class="text-muted text-decoration-line-through" style="font-size: 12px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
+                                @else
+                                    <span class="text-dark fw-bold" style="font-size: 16px; line-height: 1.2;">{{ number_format($book->price) }}đ</span>
+                                @endif
+                            </div>
                             
-                            <a href="{{ route('book.detail', $book->id) }}" class="btn btn-primary btn-sm w-100 rounded-pill mt-2 fw-bold" style="font-size: 12px">
-                                Xem Ngay
-                            </a>
+                            {{-- Lượt bán (Sách mới nên hiển thị nhẹ nhàng hơn) --}}
+                            <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center">
+                                <small class="text-muted" style="font-size: 11px;">
+                                    <i class="fas fa-check-circle text-success me-1"></i>Đã bán: <b class="text-dark">{{ number_format($book->total_sold ?? 0) }}</b>
+                                </small>
+                            </div>
+                            
+                            {{-- Nút Xem Ngay --}}
+                            <a href="{{ route('book.detail', $book->id) }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-bold py-1 mt-2" style="font-size: 0.85rem;">Xem chi tiết</a>
                         </div>
                     </div>
                 </div>
@@ -87,7 +143,7 @@
 
         {{-- Phân trang --}}
         <div class="mt-5 d-flex justify-content-center">
-            {{ $books->links() }}
+            {{ $books->appends(request()->query())->links() }}
         </div>
     @endif
 </div>

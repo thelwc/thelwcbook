@@ -56,7 +56,7 @@ class HomeController extends Controller
         $allBooks = \App\Models\Book::inRandomOrder()
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
-            ->limit(12)
+            ->limit(20)
             ->get();
 
         // 5. BÀI VIẾT MỚI NHẤT
