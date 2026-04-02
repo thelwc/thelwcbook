@@ -168,7 +168,7 @@
     <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
     <df-messenger
         intent="WELCOME"
-        chat-title="Hỗ trợ Thelwc Books 📚"
+        chat-title="Hỗ trợ Thelwc Books"
         agent-id="5248c276-64b6-46c1-9489-da9e979534e1"
         language-code="vi"
         chat-icon="https://cdn-icons-png.flaticon.com/512/4712/4712010.png" 

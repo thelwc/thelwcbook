@@ -34,6 +34,13 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::get('/terms', function () {
+    return view('client.pages.terms'); 
+})->name('terms');
+
+Route::get('/policy', function () {
+    return view('client.pages.policy'); 
+})->name('policy');
 
 Auth::routes(['login' => false, 'register' => false, 'logout' => false]);
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');

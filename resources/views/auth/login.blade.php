@@ -13,12 +13,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 
     <style>
+        /* Ẩn con mắt mặc định của trình duyệt Edge */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none;
+        }
         /* --- CSS NHÚNG TRỰC TIẾP --- */
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f8f9fa;
             color: #212529;
         }
+        
 
         .auth-wrapper {
             min-height: 100vh;
@@ -91,6 +97,28 @@
             box-shadow: 0 0 0 0.25rem rgba(197, 169, 146, 0.25);
         }
         .form-floating > label { color: #6c757d; }
+
+        /* --- TÙY CHỈNH MỚI: NÚT ẨN HIỆN MẬT KHẨU --- */
+        .password-container {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 10;
+            padding: 5px;
+        }
+        .password-toggle:hover {
+            color: #212529;
+        }
+        /* Đẩy text sang trái để không đè lên icon mắt */
+        .form-control-password {
+            padding-right: 45px !important; 
+        }
     </style>
 </head>
 <body>
@@ -109,7 +137,7 @@
                 
                 <div class="text-center mb-5">
                     <a href="{{ route('home') }}" class="d-inline-block mb-3 text-dark fw-bold fs-4">
-                        📚 Thelwc Books
+                        Thelwc Books
                     </a>
                     <h3 class="fw-bold">Chào mừng trở lại!</h3>
                     <p class="text-muted">Nhập thông tin để truy cập tài khoản.</p>
@@ -130,22 +158,27 @@
                     @csrf
                     
                     <div class="form-floating mb-3">
-                        <input type="email" class="form-control rounded-3" id="email" name="email" placeholder="name@example.com" required>
+                        <input type="email" class="form-control rounded-3" id="email" name="email" placeholder="name@example.com" required value="{{ old('email') }}">
                         <label for="email">Địa chỉ Email</label>
                     </div>
 
-                    <div class="form-floating mb-4">
-                        <input type="password" class="form-control rounded-3" id="password" name="password" placeholder="Password" required>
+                    {{-- 🔥 ĐÃ THÊM CON MẮT MẬT KHẨU 🔥 --}}
+                    <div class="form-floating mb-4 password-container">
+                        <input type="password" class="form-control rounded-3 form-control-password" id="password" name="password" placeholder="Password" required>
                         <label for="password">Mật khẩu</label>
+                        <span class="password-toggle" onclick="togglePassword('password', 'icon-pass')">
+                            <i class="far fa-eye" id="icon-pass"></i>
+                        </span>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="remember">
-                            <label class="form-check-label text-secondary" for="remember">Ghi nhớ tôi</label>
+                            {{-- 🔥 ĐÃ THÊM name="remember" ĐỂ BACKEND HIỂU 🔥 --}}
+                            <input class="form-check-input" type="checkbox" id="remember" name="remember" value="1">
+                            <label class="form-check-label text-secondary" for="remember" style="cursor: pointer;">Ghi nhớ tôi</label>
                         </div>
-                        {{-- Thay dấu # bằng route('password.request') --}}
-                        <a href="{{ route('password.request') }}" class="text-dark fw-bold small text-brand-hover">Quên mật khẩu?</a>                    </div>
+                        <a href="{{ route('password.request') }}" class="text-dark fw-bold small text-brand-hover">Quên mật khẩu?</a>
+                    </div>
 
                     <button type="submit" class="btn btn-dark-brand w-100 rounded-pill fs-6 text-uppercase">
                         Đăng nhập ngay
@@ -179,6 +212,24 @@
         </div>
     </div>
 </div>
+
+{{-- SCRIPT BẬT TẮT MẬT KHẨU --}}
+<script>
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+</script>
 
 </body>
 </html>

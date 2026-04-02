@@ -13,6 +13,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 
     <style>
+        /* Ẩn con mắt mặc định của trình duyệt Edge */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none;
+        }
         /* --- CSS NHÚNG TRỰC TIẾP --- */
         body {
             font-family: 'Nunito', sans-serif;
@@ -179,7 +184,8 @@
                     <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" id="terms" required>
                         <label class="form-check-label text-muted small" for="terms">
-                            Tôi đồng ý với <a href="#" class="text-dark fw-bold text-brand-hover">Điều khoản</a> và <a href="#" class="text-dark fw-bold text-brand-hover">Chính sách bảo mật</a>
+                            Tôi đồng ý với <a href="{{ route('terms') }}" class="text-dark fw-bold text-brand-hover" target="_blank">Điều khoản</a> 
+                            và <a href="{{ route('policy') }}" class="text-dark fw-bold text-brand-hover" target="_blank">Chính sách bảo mật</a>
                         </label>
                     </div>
 

@@ -15,13 +15,16 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // 2. Xử lý đăng nhập (Giữ nguyên Rate Limit xịn của cậu + Logic phân luồng mới)
+    // 2. Xử lý đăng nhập (Giữ nguyên Rate Limit xịn của cậu + Thêm Ghi nhớ + Logic phân luồng)
     public function login(Request $request) {
         // Validate
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
+
+        // 🔥 LẤY GIÁ TRỊ TỪ Ô CHECKBOX "GHI NHỚ" 🔥
+        $remember = $request->boolean('remember');
 
         // --- RATE LIMIT (CHỐNG SPAM) ---
         $throttleKey = Str::lower($request->email) . '|' . $request->ip();
@@ -32,14 +35,14 @@ class AuthController extends Controller
         }
         // -------------------------------
 
-        // Kiểm tra đăng nhập
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+        // 🔥 KIỂM TRA ĐĂNG NHẬP: NHỚ TRUYỀN BIẾN $remember VÀO 🔥
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember)) {
             
             // Thành công -> Xóa bộ đếm lỗi
             RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
 
-            // --- 🔥 BẮT ĐẦU LOGIC CHIA LUỒNG MỚI (THEO SỐ) ---
+            // --- BẮT ĐẦU LOGIC CHIA LUỒNG MỚI (THEO SỐ) ---
             $role = Auth::user()->role;
 
             // 1. Admin (0) -> Về quản lý User

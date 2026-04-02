@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
-// --- THÊM 4 DÒNG NÀY ---
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -15,23 +14,52 @@ class LoginController extends Controller
 {
     use AuthenticatesUsers;
 
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
     protected $redirectTo = '/home';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
         $this->middleware('auth')->only('logout');
     }
+
+    // ====================================================
+    // 🔥 1. HÀM XỬ LÝ ĐĂNG NHẬP CHÍNH (CÓ GHI NHỚ LẠI) 🔥
+    // ====================================================
+    // public function login(Request $request)
+    // {
+
+    //     dd([
+    //         'tat_ca_du_lieu_gui_len' => $request->all(),
+    //         'bien_ghi_nho_nhan_duoc' => $request->boolean('remember')
+    //     ]);
+    //     // Kiểm tra xem đã nhập đủ thông tin chưa
+    //     $request->validate([
+    //         'email' => 'required|email',
+    //         'password' => 'required',
+    //     ]);
+
+    //     // Bắt biến 'remember' từ giao diện (nếu có check thì là true, không thì false)
+    //     // Sửa dòng cũ: $remember = $request->has('remember');
+    //     // THÀNH DÒNG MỚI NÀY:
+    //     $remember = $request->boolean('remember');
+
+    //     if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember)) {
+    //         return $this->authenticated($request, Auth::user());
+    //     }
+
+    //     // Thực hiện đăng nhập với Auth::attempt kèm theo lệnh $remember
+    //     if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember)) {
+    //         // Đăng nhập thành công -> Chuyển xuống hàm phân quyền bên dưới
+    //         return $this->authenticated($request, Auth::user());
+    //     }
+
+    //     // Đăng nhập thất bại -> Trả về đúng biến session('error') mà giao diện đang chờ
+    //     return back()->with('error', 'Email hoặc mật khẩu không chính xác!');
+    // }
+
+    // ====================================================
+    // 2. PHÂN QUYỀN SAU KHI ĐĂNG NHẬP
+    // ====================================================
     protected function authenticated(Request $request, $user)
     {
         // 1. Admin (0) -> Vào quản lý User
@@ -59,54 +87,41 @@ class LoginController extends Controller
     }
 
     // ====================================================
-    // BẮT ĐẦU PHẦN CODE GOOGLE LOGIN (Thelwc thêm vào)
+    // 3. CODE GOOGLE LOGIN
     // ====================================================
-
-    // 1. Chuyển hướng người dùng sang trang đăng nhập của Google
     public function redirectToGoogle()
     {
         return Socialite::driver('google')->redirect();
     }
 
-    // 2. Google gọi ngược về đây sau khi user chọn tài khoản xong
-   // 2. Google gọi ngược về đây sau khi user chọn tài khoản xong
     public function handleGoogleCallback()
     {
         try {
-            // 1. Lấy thông tin từ Google
             $googleUser = Socialite::driver('google')->user();
-
-            // 2. Tìm user đã từng login bằng Google chưa
             $user = User::where('google_id', $googleUser->id)->first();
 
             if ($user) {
-                // === SỬA ĐOẠN NÀY: KIỂM TRA ẢNH TRƯỚC KHI CHO VÀO ===
-                // Nếu avatar đang trống (do cậu vừa xóa), thì lấy lại ảnh Google
+                // Nếu avatar đang trống, thì lấy lại ảnh Google
                 if (empty($user->avatar)) {
                     $user->avatar = $googleUser->avatar;
                     $user->save();
                 }
-                // ====================================================
-
-                Auth::login($user);
+                
+                // Mặc định cho phép ghi nhớ khi đăng nhập bằng Google luôn
+                Auth::login($user, true); 
                 return redirect()->route('home');
 
             } else {
-                // B. Chưa có google_id -> Kiểm tra xem email có trùng không
                 $existingUser = User::where('email', $googleUser->email)->first();
 
                 if ($existingUser) {
-                    $existingUser->google_id = $googleUser->id; // Cập nhật ID Google
-
-                    // Nếu khách chưa có ảnh thì lấy ảnh Google
+                    $existingUser->google_id = $googleUser->id; 
                     if (empty($existingUser->avatar)) {
                         $existingUser->avatar = $googleUser->avatar;
                     }
-                    
                     $existingUser->save();
-                    Auth::login($existingUser);
+                    Auth::login($existingUser, true);
                 } else {
-                    // Tạo tài khoản mới
                     $newUser = User::create([
                         'name' => $googleUser->name,
                         'email' => $googleUser->email,
@@ -115,7 +130,7 @@ class LoginController extends Controller
                         'avatar' => $googleUser->avatar,
                         'role' => 5,
                     ]);
-                    Auth::login($newUser);
+                    Auth::login($newUser, true);
                 }
                 
                 return redirect()->route('home');
