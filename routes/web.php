@@ -24,6 +24,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\ReadController; 
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\ChatbotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +58,7 @@ Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallbac
 */
 Route::middleware(['restrict.staff'])->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::post('/chatbot/send', [ChatbotController::class, 'sendMessage'])->name('chatbot.send');
     Route::get('/book/{id}', [HomeController::class, 'detail'])->name('book.detail');
     Route::get('/search', [HomeController::class, 'search'])->name('search');
     Route::get('/danh-muc/{slug}', [HomeController::class, 'categoryBook'])->name('category.show');

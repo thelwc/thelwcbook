@@ -306,9 +306,36 @@ class BookController extends Controller
 
     // --- CÁC HÀM HIỂN THỊ KHÁC ---
 
-    public function shop()
+    // --- 5. TRANG CỬA HÀNG (SHOP) - ĐÃ FIX SẮP XẾP ---
+    public function shop(Request $request) // Thêm Request $request vào đây
     {
-        $books = Book::orderBy('created_at', 'desc')->paginate(20);
+        // 1. Khởi tạo query
+        $query = Book::with(['category']);
+
+        // 2. Logic Sắp xếp
+        if ($request->filled('sort')) {
+            $sort = $request->sort;
+            if ($sort == 'price_asc') {
+                // Sắp xếp giá thấp đến cao (Ưu tiên lấy giá Sale nếu có)
+                $query->orderByRaw('IF(sale_price > 0 AND sale_price < price, sale_price, price) ASC');
+            } elseif ($sort == 'price_desc') {
+                // Sắp xếp giá cao đến thấp
+                $query->orderByRaw('IF(sale_price > 0 AND sale_price < price, sale_price, price) DESC');
+            } else {
+                $query->latest(); // Mặc định: Mới nhất
+            }
+        } else {
+            $query->latest(); 
+        }
+
+        // 3. Load thêm điểm đánh giá (để đồng bộ với file Blade cậu gửi)
+        $books = $query->withAvg('reviews', 'rating')
+                       ->withCount('reviews')
+                       ->paginate(20);
+
+        // 4. Quan trọng: Giữ lại tham số ?sort=... khi chuyển trang
+        $books->appends($request->all());
+
         return view('client.pages.shop', compact('books'));
     }
 

@@ -73,11 +73,11 @@
         .highlight-item a { color: #dc3545 !important; font-weight: 800 !important; }
         .highlight-item a:hover { text-decoration: underline; }
 
-        /* 🔥 CSS NÚT BACK TO TOP (Đè ngay trên Chatbot) 🔥 */
+        /* 🔥 CSS NÚT BACK TO TOP (Đã fix lỗi che nút Gửi) 🔥 */
         #btnBackToTop {
             position: fixed;
-            bottom: 90px; /* Nâng lên 90px để né con Bot ở 20px */
-            right: 20px;  /* Thẳng hàng với con Bot */
+            bottom: 27px; /* Căn giữa dọc cho bằng với nút Chatbot (60px) */
+            right: 100px; /* Đẩy sang trái để nhường chỗ cho khung Chatbot */
             background-color: #212529;
             color: white;
             width: 45px;
@@ -88,7 +88,7 @@
             align-items: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             cursor: pointer;
-            z-index: 99998;
+            z-index: 9998; /* Để thấp hơn z-index của khung chat một xíu */
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
@@ -101,20 +101,92 @@
             opacity: 1;
             visibility: visible;
         }
+
+        /* ========================================== */
+        /* 🔥 CSS TÙY CHỈNH THELWC AI CHATBOT 🔥 */
+        /* ========================================== */
+        #chat-btn {
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            width: 60px; height: 60px; border-radius: 50%;
+            background-color: #212529; color: #ffffff; /* Nút chính nền tối, chữ trắng */
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        #chat-btn:hover { 
+            background-color: #c5a992; /* Hover màu nổi bật */
+            transform: translateY(-3px) scale(1.05); 
+        }
+
+        #chat-window {
+            position: fixed; bottom: 90px; right: 20px; z-index: 9999;
+            width: 360px; height: 500px; max-width: 90vw; max-height: 80vh; /* Responsive Mobile */
+            background-color: #ffffff;
+            border-radius: 12px; /* Bo góc chuẩn BS5 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: none; flex-direction: column; overflow: hidden;
+            font-family: 'Nunito', sans-serif; /* Đồng bộ font toàn form */
+            border: 1px solid #e0e0e0;
+        }
         
-        /* 🔥 CSS TÙY CHỈNH MÀU SẮC CHATBOT 🔥 */
-        df-messenger {
-            /* Tông màu Đen nhám và Nâu tây đồng bộ layout */
-            --df-messenger-button-titlebar-color: #212529; 
-            --df-messenger-button-titlebar-font-color: #ffffff;
-            --df-messenger-chat-background-color: #f8f9fa; 
-            --df-messenger-font-color: #212529;
-            --df-messenger-send-icon: #c5a992; 
-            
-            --df-messenger-bot-message: #ffffff;
-            --df-messenger-user-message: #ebdcd0; 
-            
-            z-index: 99999;
+        .chat-header {
+            background-color: #212529; color: #ffffff; padding: 15px 20px;
+            font-weight: 700; display: flex; justify-content: space-between; align-items: center;
+        }
+        .chat-header span { font-size: 1.05rem; }
+        .chat-header i.close-btn { cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+        .chat-header i.close-btn:hover { color: #dc3545; } /* Đỏ cảnh báo khi hover nút Tắt */
+
+        .chat-body {
+            flex: 1; padding: 20px; overflow-y: auto; 
+            background-color: #f8f9fa; /* Nền sáng dịu mắt */
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-thumb { background: #c5a992; border-radius: 10px; }
+        
+        .msg { 
+            max-width: 85%; padding: 12px 16px; border-radius: 12px; 
+            font-size: 0.95rem; line-height: 1.5; word-wrap: break-word;
+        }
+        /* Style cho link (đường dẫn sách) trong chat */
+        .msg a { color: #0d6efd; font-weight: 600; text-decoration: underline; transition: all 0.2s;}
+        .msg a:hover { color: #c5a992 !important; }
+
+        .msg-bot { 
+            background-color: #ffffff; color: #212529; /* Chữ chính */
+            align-self: flex-start; border-bottom-left-radius: 4px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); border: 1px solid #e0e0e0;
+        }
+        .msg-user { 
+            background-color: #212529; color: #ffffff; /* Tin nhắn khách đồng màu nút chính */
+            align-self: flex-end; border-bottom-right-radius: 4px; 
+            font-weight: 500; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .chat-footer {
+            padding: 15px; background-color: #ffffff; border-top: 1px solid #e0e0e0;
+            display: flex; gap: 10px; align-items: center;
+        }
+        .chat-footer input {
+            flex: 1; padding: 12px 18px; border: 1px solid #ced4da; 
+            border-radius: 25px; outline: none; transition: all 0.2s;
+            font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: #212529;
+            background-color: #f8f9fa;
+        }
+        .chat-footer input::placeholder { color: #6c757d; } /* Chữ phụ */
+        .chat-footer input:focus { 
+            border-color: #c5a992; background-color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(197, 169, 146, 0.25); /* Focus ring mềm mại */
+        }
+        .chat-footer button {
+            background-color: #212529; color: #ffffff; border: none;
+            width: 45px; height: 45px; border-radius: 50%; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; 
+            transition: all 0.2s ease; font-size: 1.1rem;
+        }
+        .chat-footer button:hover { 
+            background-color: #c5a992; transform: translateY(-2px);
         }
     </style>
     
@@ -129,6 +201,25 @@
     {{-- 🔥 NÚT BACK TO TOP 🔥 --}}
     <div id="btnBackToTop" title="Lên đầu trang">
         <i class="fas fa-arrow-up"></i>
+    </div>
+
+    {{-- ========================================== --}}
+    {{-- 🤖 AI CHATBOT THELWC BOOKS (TỰ CODE) --}}
+    {{-- ========================================== --}}
+    <div id="chat-btn"><i class="fas fa-comment-dots"></i></div>
+
+    <div id="chat-window">
+        <div class="chat-header">
+            <span><i class="fas fa-robot me-2" style="color: #c5a992;"></i> Thelwc AI</span>
+            <i class="fas fa-times close-btn" onclick="toggleChat()" title="Đóng"></i>
+        </div>
+        <div class="chat-body" id="chat-box">
+            <div class="msg msg-bot">Chào sếp! Tớ là trợ lý AI thông minh của Thelwc Books. Sếp cần tìm sách gì hay có câu hỏi nào hôm nay không? 📚</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" placeholder="Nhập câu hỏi của sếp..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
     </div>
 
     {{-- ========================================== --}}
@@ -162,34 +253,11 @@
 
     @yield('scripts')
 
-    {{-- ========================================== --}}
-    {{-- 🤖 CHATBOT THELWC BOOKS (CỐ ĐỊNH GÓC DƯỚI) --}}
-    {{-- ========================================== --}}
-    <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-    <df-messenger
-        intent="WELCOME"
-        chat-title="Hỗ trợ Thelwc Books"
-        agent-id="5248c276-64b6-46c1-9489-da9e979534e1"
-        language-code="vi"
-        chat-icon="https://cdn-icons-png.flaticon.com/512/4712/4712010.png" 
-    ></df-messenger>
-
-    {{-- 🧠 SCRIPT: CLICK RA NGOÀI ĐÓNG BOT + XỬ LÝ NÚT BACK TO TOP --}}
+    {{-- 🧠 SCRIPT: XỬ LÝ THELWC AI VÀ BACK TO TOP --}}
     <script>
-        // 1. TỰ ĐỘNG ĐÓNG BOT KHI CLICK RA NGOÀI
-        window.addEventListener('click', function(e) {
-            const dfMessenger = document.querySelector('df-messenger');
-            if (dfMessenger) {
-                if (!dfMessenger.contains(e.target)) {
-                    dfMessenger.removeAttribute('expand');
-                }
-            }
-        });
-
-        // 2. CHỨC NĂNG BACK TO TOP
+        // 1. CHỨC NĂNG BACK TO TOP
         const btnBackToTop = document.getElementById("btnBackToTop");
         
-        // Hiện nút khi cuộn xuống 300px
         window.onscroll = function() {
             if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
                 btnBackToTop.classList.add("show");
@@ -198,10 +266,80 @@
             }
         };
         
-        // Bấm nút thì cuộn mượt lên trên
         btnBackToTop.addEventListener("click", function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+
+        // 2. CHỨC NĂNG THELWC AI CHATBOT
+        const chatBtn = document.getElementById('chat-btn');
+        const chatWindow = document.getElementById('chat-window');
+        const chatBox = document.getElementById('chat-box');
+        const chatInput = document.getElementById('chat-input');
+
+        // Mở/Đóng chat
+        chatBtn.addEventListener('click', toggleChat);
+        function toggleChat() {
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+            if(chatWindow.style.display === 'flex') {
+                chatInput.focus();
+            }
+        }
+
+        // Bắt sự kiện phím Enter
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        // Gửi tin nhắn
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // In tin nhắn của User ra
+            appendMessage(text, 'msg-user');
+            chatInput.value = '';
+
+            // Hiện trạng thái Bot đang gõ
+            const loadingId = 'loading-' + Date.now();
+            appendMessage('<i class="fas fa-ellipsis-h fa-fade"></i> Đang suy nghĩ...', 'msg-bot', loadingId);
+
+            // Gửi dữ liệu qua Controller Laravel
+            try {
+                const response = await fetch('{{ route("chatbot.send") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Lấy token để bảo mật Form
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+                
+                const data = await response.json();
+                
+                // Xóa chữ Đang gõ...
+                const loadingMsg = document.getElementById(loadingId);
+                if(loadingMsg) loadingMsg.remove();
+                
+                // Format văn bản từ Markdown sang HTML (xuống dòng và in đậm)
+                let formattedReply = data.reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+                appendMessage(formattedReply, 'msg-bot');
+
+            } catch (error) {
+                const loadingMsg = document.getElementById(loadingId);
+                if(loadingMsg) loadingMsg.remove();
+                appendMessage('Oops! Hình như đứt cáp mạng rồi sếp ơi, thử lại xíu nhé!', 'msg-bot');
+            }
+        }
+
+        // Hàm in tin nhắn và cuộn xuống cuối
+        function appendMessage(text, className, id = '') {
+            const div = document.createElement('div');
+            div.className = `msg ${className}`;
+            div.innerHTML = text;
+            if (id) div.id = id;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
     </script>
 </body>
 </html>
