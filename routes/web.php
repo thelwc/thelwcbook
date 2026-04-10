@@ -79,6 +79,12 @@ Route::middleware(['restrict.staff'])->group(function () {
 
     Route::post('/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
     Route::get('/cart/remove-coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+    // Tra cứu đơn hàng (Dành cho khách vãng lai và cả user)
+    Route::get('/tra-cuu-don-hang', [OrderController::class, 'trackOrder'])->name('orders.track');
+    Route::post('/tra-cuu-don-hang', [OrderController::class, 'trackOrderPost'])->name('orders.track.post');
+    Route::post('/place-order', [OrderController::class, 'store'])->name('place.order');
+    Route::get('/order/success/{id}', [OrderController::class, 'success'])->name('orders.success');
 
     Route::get('/shop', [BookController::class, 'shop'])->name('shop');
     Route::get('/deal-soc', [BookController::class, 'flashSale'])->name('flash.sale');
@@ -126,9 +132,6 @@ Route::middleware(['auth', 'restrict.staff'])->group(function () {
     Route::post('/my-orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
     // Chỗ này vẫn chặn cứng ngắc, Admin không thể vào thanh toán hay xem lịch sử mua
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
-    Route::post('/place-order', [OrderController::class, 'store'])->name('place.order');
-    Route::get('/order/success/{id}', [OrderController::class, 'success'])->name('orders.success');
     Route::post('/review/store', [ReviewController::class, 'store'])->name('review.store');
 });
 
@@ -195,6 +198,12 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::put('/posts/{id}', [PostController::class, 'update'])->name('admin.posts.update');
         Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('admin.posts.destroy'); 
         Route::post('/posts/{id}/toggle', [PostController::class, 'toggleStatus'])->name('admin.posts.toggle');
+        // Route để Admin trl, xóa câu trả lời của chính mình
+        Route::post('/reviews/{id}/reply', [App\Http\Controllers\ReviewController::class, 'reply'])->name('admin.reviews.reply');
+        Route::put('/admin/reviews/{id}/delete-reply', [App\Http\Controllers\ReviewController::class, 'deleteReply'])->name('admin.reviews.delete_reply');
+        // Route để Ẩn / Hiện bình luận của khách
+        Route::put('/admin/reviews/{id}/toggle-status', [App\Http\Controllers\ReviewController::class, 'toggleStatus'])->name('admin.reviews.toggle_status');
+
     });
 
     // =================================================================
@@ -219,12 +228,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         
         // Xem Review & Tin tức
         Route::get('/reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
-        Route::post('/reviews/{id}/reply', [App\Http\Controllers\ReviewController::class, 'reply'])->name('admin.reviews.reply');
-        // Route để Admin xóa câu trả lời của chính mình
-        Route::put('/admin/reviews/{id}/delete-reply', [App\Http\Controllers\ReviewController::class, 'deleteReply'])->name('admin.reviews.delete_reply');
-        // Route để Ẩn / Hiện bình luận của khách
-        Route::put('/admin/reviews/{id}/toggle-status', [App\Http\Controllers\ReviewController::class, 'toggleStatus'])->name('admin.reviews.toggle_status');
-        Route::get('/posts', [PostController::class, 'adminIndex'])->name('admin.posts.index'); 
+        Route::get('/posts', [PostController::class, 'adminIndex'])->name('admin.posts.index');
+
+        
     });
 
     // =================================================================
@@ -242,5 +248,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::middleware(['role:admin,director,manager'])->group(function () {
         Route::resource('users', UserController::class)->except(['import', 'export']);
     });
-
+    Route::middleware(['role:director'])->group(function () {
+        Route::get('/admin/revenue/details', [App\Http\Controllers\DashboardController::class, 'revenueDetails'])->name('admin.revenue.details');
+        Route::get('/admin/revenue/export', [App\Http\Controllers\DashboardController::class, 'exportExcel'])->name('admin.revenue.export');
+        Route::get('/dashboard/urgent-books', [App\Http\Controllers\DashboardController::class, 'urgentBooks'])->name('dashboard.urgent_books');
+        Route::get('/dashboard/urgent-books/export', [App\Http\Controllers\DashboardController::class, 'exportUrgentBooks'])->name('dashboard.urgent_books.export');   
+    });   
 });

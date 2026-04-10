@@ -18,7 +18,20 @@
                                 <h4 class="font-weight-bolder mb-0 mt-2 text-primary">
                                     {{ number_format($totalRevenue) }} ₫
                                 </h4>
-                                <small class="text-success text-xs font-weight-bolder">+5% so với tháng trước</small>
+                                
+                                {{-- Kiểm tra quyền: Căn chỉnh lại giao diện nút bấm --}}
+                                @if(Auth::user()->role == 0 || Auth::user()->role == 1)
+                                    <div class="d-flex flex-wrap mt-3 gap-2">
+                                        <a href="{{ route('admin.revenue.details') }}" class="btn btn-sm btn-outline-info mb-0 px-2 py-1" style="font-size: 0.7rem;" title="Xem chi tiết">
+                                            Chi tiết <i class="fas fa-arrow-right ms-1"></i>
+                                        </a>
+                                        <a href="{{ route('admin.revenue.export') }}" class="btn btn-sm btn-outline-success mb-0 px-2 py-1" style="font-size: 0.7rem;" title="Xuất báo cáo Excel tháng này">
+                                            <i class="fas fa-file-excel me-1"></i> Xuất
+                                        </a>
+                                    </div>
+                                @else
+                                    <small class="text-success text-xs font-weight-bolder d-block mt-2">+5% so với tháng trước</small>
+                                @endif
                             </div>
                         </div>
                         <div class="col-4 text-end">
@@ -113,7 +126,7 @@
         <div class="col-lg-8">
             <div class="card shadow border-0 rounded-4 h-100">
                 <div class="card-header bg-white border-0 py-3">
-                    <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-chart-line me-2 text-primary"></i>Xu hướng doanh thu (7 ngày)</h6>
+                    <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-chart-line me-2 text-primary"></i>Xu hướng doanh thu (30 ngày)</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="revenueChart" height="300"></canvas>
@@ -258,14 +271,24 @@
                     <ul class="list-group list-group-flush">
                         @foreach($lowStockBooks as $book)
                         <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ asset($book->image) }}" class="rounded border me-3" width="35" height="50" style="object-fit: cover;">
+                            <div class="d-flex align-items-center pe-3">
+                                <img src="{{ asset($book->image) }}" class="rounded border me-3 flex-shrink-0" width="35" height="50" style="object-fit: cover;">
                                 <div>
-                                    <div class="fw-bold text-dark text-sm">{{ Str::limit($book->title, 30) }}</div>
+                                    <div class="fw-bold text-dark text-sm mb-1" style="line-height: 1.3;">{{ Str::limit($book->title, 35) }}</div>
                                     <small class="text-danger fw-bold">Chỉ còn: {{ $book->quantity }}</small>
                                 </div>
                             </div>
-                            <a href="{{ route('books.edit', $book->id) }}" class="btn btn-sm btn-light text-danger border-danger">Nhập</a>
+                            
+                            {{-- 🔥 XỬ LÝ PHÂN QUYỀN NÚT BẤM TẠI ĐÂY 🔥 --}}
+                            @if(in_array(Auth::user()->role, [0, 2]))
+                                {{-- Role 0 (Admin) và 2 (Quản lý) mới có nút Nhập --}}
+                                <a href="{{ route('books.edit', $book->id) }}" class="btn btn-sm btn-light text-danger border-danger hover-scale m-0 text-nowrap">Nhập</a>
+                            @else
+                                {{-- Role 1 (Giám đốc) hoặc người khác chỉ thấy nhãn khóa --}}
+                                <span class="badge bg-light text-secondary border px-2 py-1 fw-normal text-nowrap" style="font-size: 11px; cursor: not-allowed;" title="Bạn chỉ có quyền xem">
+                                    <i class="fas fa-lock text-muted me-1"></i> Chỉ xem
+                                </span>
+                            @endif
                         </li>
                         @endforeach
                         
@@ -277,6 +300,15 @@
                         @endif
                     </ul>
                 </div>
+                
+                {{-- 🔥 THÊM CARD FOOTER Ở ĐÂY CHỨA NÚT XEM TẤT CẢ 🔥 --}}
+                @if(isset($totalLowStockBooks) && $totalLowStockBooks > 5)
+                <div class="card-footer bg-white text-center border-0 pb-3 pt-2">
+                    <a href="{{ route('dashboard.urgent_books') }}" class="text-primary text-decoration-none fw-bold" style="font-size: 0.9rem; transition: all 0.3s;">
+                        Xem tất cả (còn {{ $totalLowStockBooks - 5 }} cuốn) <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -286,7 +318,6 @@
     {{-- =========================================================== --}}
     {{-- (Giữ lại bảng đơn hàng cũ của cậu ở đây nhưng rút gọn lại nếu cần) --}}
 </div>
-
 {{-- SCRIPT --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -294,7 +325,9 @@
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     };
 
-    // 1. BIỂU ĐỒ DOANH THU (NÂNG CẤP)
+    // ==========================================
+    // 1. BIỂU ĐỒ DOANH THU (ĐƯỜNG - 30 NGÀY)
+    // ==========================================
     const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
     let gradient = ctxRevenue.createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, 'rgba(203, 12, 159, 0.5)'); 
@@ -310,17 +343,17 @@
                 borderColor: '#cb0c9f',
                 backgroundColor: gradient,
                 borderWidth: 3,
-                tension: 0.4,
+                tension: 0.3,
                 fill: true,
                 pointBackgroundColor: '#fff',
                 pointBorderColor: '#cb0c9f',
-                pointRadius: 4,
-                pointHoverRadius: 7
+                pointRadius: 2, 
+                pointHoverRadius: 6
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false, // Để chỉnh height trong html
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -342,7 +375,9 @@
         }
     });
 
-    // 2. BIỂU ĐỒ TRẠNG THÁI (NÂNG CẤP)
+    // ==========================================
+    // 2. BIỂU ĐỒ TRẠNG THÁI (TRÒN - 5 MÀU)
+    // ==========================================
     const ctxStatus = document.getElementById('statusChart').getContext('2d');
     const statusData = {!! json_encode($statusCounts) !!};
     const totalOrders = statusData.reduce((a, b) => a + b, 0);
@@ -350,10 +385,10 @@
     new Chart(ctxStatus, {
         type: 'doughnut',
         data: {
-            labels: ['Chờ xử lý', 'Đã xác nhận', 'Thành công', 'Đã hủy'],
+            labels: ['Chờ xử lý', 'Đã xác nhận', 'Thành công', 'Đã hủy', 'Bom hàng'], // Đã thêm nhãn
             datasets: [{
-                data: statusData,
-                backgroundColor: ['#ffc107', '#17c1e8', '#82d616', '#ea0606'],
+                data: statusData, 
+                backgroundColor: ['#ffc107', '#17c1e8', '#82d616', '#ea0606', '#6f42c1'], // Thêm màu Tím (#6f42c1) cho Bom hàng
                 borderWidth: 2,
                 borderColor: '#fff',
                 hoverOffset: 10

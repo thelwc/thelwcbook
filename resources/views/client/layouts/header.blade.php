@@ -224,6 +224,11 @@
                 </a>
                 @endauth
 
+                {{-- TRA CỨU ĐƠN HÀNG MOBILE --}}
+                <a href="{{ route('orders.track') }}" class="position-relative px-2 text-dark" title="Tra cứu đơn hàng">
+                    <i class="fas fa-search-location fs-5"></i>
+                </a>
+                
                 {{-- GIỎ HÀNG MOBILE --}}
                 <a href="{{ route('cart.index') }}" class="position-relative px-2 text-dark">
                     <i class="fas fa-shopping-cart fs-5"></i>
@@ -303,6 +308,16 @@
                                                     <span class="badge bg-success me-2">TOP</span> Bán Chạy
                                                 </a>
                                             </li>
+                                            <li class="mb-2">
+                                                <a href="{{ route('ebooks') }}" class="text-dark text-decoration-none fw-bold">
+                                                    <span class="badge bg-primary me-2">PDF</span> Sách Ebook
+                                                </a>
+                                            </li>
+                                            <li class="mb-2">
+                                                <a href="{{ route('shop') }}" class="text-dark text-decoration-none fw-bold">
+                                                    <span class="badge bg-info text-dark me-2">ALL</span> Toàn bộ sách
+                                                </a>
+                                            </li>
                                         </ul>
                                         <img src="https://cdn0.fahasa.com/media/wysiwyg/Thang-01-2025/Lixi_Tet_310x210.jpg" class="w-100 rounded shadow-sm mt-2" style="height: 120px; object-fit: cover;">
                                     </div>
@@ -348,6 +363,10 @@
 
                 {{-- ICONS DESKTOP --}}
                 <div class="d-none d-lg-flex align-items-center ms-3 gap-3">
+                    {{-- 🔥 THÊM NÚT TRA CỨU ĐƠN HÀNG PC VÀO ĐÂY 🔥 --}}
+                    <a href="{{ route('orders.track') }}" class="nav-link text-dark position-relative p-0" title="Tra cứu đơn hàng">
+                        <i class="fas fa-search-location fs-5"></i>
+                    </a>
                     <a href="{{ route('favorites.index') }}" class="nav-link text-dark position-relative">
                         <i class="fas fa-heart fs-5 text-danger"></i>
                         @if(Auth::check() && Auth::user()->favorites()->count() > 0)

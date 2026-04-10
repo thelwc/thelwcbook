@@ -3,7 +3,7 @@
 @section('content')
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div class="d-flex align-items-center gap-3">
-        <a href="{{ route('orders.index') }}" class="btn btn-outline-secondary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
@@ -146,111 +146,114 @@
                 $hasEbook = false;
 
                 foreach($order->details as $d) {
-                $isEbookItem = false;
-                if(isset($d->type) && $d->type == 'ebook') $isEbookItem = true;
-                elseif($d->book && $d->price == $d->book->ebook_price) $isEbookItem = true;
+                    $isEbookItem = false;
+                    if(isset($d->type) && $d->type == 'ebook') $isEbookItem = true;
+                    elseif($d->book && $d->price == $d->book->ebook_price) $isEbookItem = true;
 
-                if ($isEbookItem) $hasEbook = true;
-                else $hasPhysicalBook = true;
+                    if ($isEbookItem) $hasEbook = true;
+                    else $hasPhysicalBook = true;
                 }
                 @endphp
 
-                {{-- FORM XỬ LÝ --}}
+                {{-- FORM XỬ LÝ (CHỈ DÀNH CHO QUẢN LÝ VÀ NHÂN VIÊN) --}}
                 @if(in_array(Auth::user()->role, [2, 3]))
-                <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
-                    @csrf
 
-                    {{-- TRẠNG THÁI: CHỜ XỬ LÝ --}}
+                    {{-- 1. TRẠNG THÁI: CHỜ XỬ LÝ --}}
                     @if($order->status == 'pending' || $order->status == 0)
+                        <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
+                            @csrf
+                            {{-- TRƯỜNG HỢP 1: TOÀN EBOOK --}}
+                            @if(!$hasPhysicalBook && $hasEbook)
+                            <button type="submit" name="status" value="completed" class="btn btn-success w-100 fw-bold mb-2 shadow-sm py-3 rounded-pill">
+                                <i class="fas fa-bolt me-2"></i> Kích hoạt Ebook & Hoàn thành
+                            </button>
+                            <div class="text-center text-muted small fst-italic mt-2"><i class="fas fa-info-circle me-1"></i>Khách hàng sẽ xem được sách ngay lập tức.</div>
 
-                    {{-- TRƯỜNG HỢP 1: TOÀN EBOOK --}}
-                    @if(!$hasPhysicalBook && $hasEbook)
-                    <button type="submit" name="status" value="completed" class="btn btn-success w-100 fw-bold mb-2 shadow-sm py-3 rounded-pill">
-                        <i class="fas fa-bolt me-2"></i> Kích hoạt Ebook & Hoàn thành
-                    </button>
-                    <div class="text-center text-muted small fst-italic mt-2"><i class="fas fa-info-circle me-1"></i>Khách hàng sẽ xem được sách ngay lập tức.</div>
+                            {{-- TRƯỜNG HỢP 2: ĐƠN HỖN HỢP --}}
+                            @elseif($hasPhysicalBook && $hasEbook)
+                            <button type="submit" name="status" value="confirmed" class="btn btn-primary w-100 fw-bold mb-2 shadow-sm py-3 rounded-pill">
+                                <i class="fas fa-layer-group me-2"></i> Kích hoạt Ebook & Soạn sách giấy
+                            </button>
+                            <div class="text-center text-muted small fst-italic mt-2">
+                                <i class="fas fa-info-circle me-1"></i> Ebook mở khóa ngay. Kho tiến hành soạn sách giấy.
+                            </div>
 
-                    {{-- TRƯỜNG HỢP 2: ĐƠN HỖN HỢP --}}
-                    @elseif($hasPhysicalBook && $hasEbook)
-                    <button type="submit" name="status" value="confirmed" class="btn btn-primary w-100 fw-bold mb-2 shadow-sm py-3 rounded-pill">
-                        <i class="fas fa-layer-group me-2"></i> Kích hoạt Ebook & Soạn sách giấy
-                    </button>
-                    <div class="text-center text-muted small fst-italic mt-2">
-                        <i class="fas fa-info-circle me-1"></i> Ebook sẽ được mở khóa ngay. Đơn hàng chuyển sang "Đã xác nhận" để kho soạn sách giấy.
-                    </div>
+                            {{-- TRƯỜNG HỢP 3: CHỈ CÓ SÁCH GIẤY --}}
+                            @else
+                            <button type="submit" name="status" value="confirmed" class="btn btn-primary w-100 fw-bold mb-2 shadow-sm py-3 rounded-pill">
+                                <i class="fas fa-check-circle me-2"></i> Xác nhận & Soạn hàng
+                            </button>
+                            <div class="text-center text-muted small fst-italic mt-2"><i class="fas fa-info-circle me-1"></i>Hệ thống sẽ tự động trừ kho tổng.</div>
+                            @endif
+                        </form>
 
-                    {{-- TRƯỜNG HỢP 3: CHỈ CÓ SÁCH GIẤY --}}
-                    @else
-                    <button type="submit" name="status" value="confirmed" class="btn btn-primary w-100 fw-bold mb-2 shadow-sm py-3 rounded-pill">
-                        <i class="fas fa-check-circle me-2"></i> Xác nhận & Soạn hàng
-                    </button>
-                    <div class="text-center text-muted small fst-italic mt-2"><i class="fas fa-info-circle me-1"></i>Hệ thống sẽ tự động trừ kho tổng.</div>
-                    @endif
+                        {{-- NÚT HỦY ĐƠN CHỈ HIỆN Ở TRẠNG THÁI CHỜ XỬ LÝ --}}
+                        <div class="mt-4 pt-4 border-top border-light">
+                            <form action="{{ route('orders.outOfStock', $order->id) }}" method="POST" onsubmit="return confirm('CẢNH BÁO: Hành động này sẽ hủy đơn hàng. Bạn có chắc chắn không?');">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger w-100 rounded-pill py-2">
+                                    <i class="fas fa-times me-2"></i> Hủy đơn / Báo hết hàng
+                                </button>
+                            </form>
+                        </div>
 
-                    {{-- TRẠNG THÁI: ĐÃ XÁC NHẬN --}}
+                    {{-- 2. TRẠNG THÁI: ĐÃ XÁC NHẬN --}}
                     @elseif($order->status == 'confirmed' || $order->status == 1)
-                    <div class="d-grid gap-3">
-                        <button type="submit" name="status" value="shipping" class="btn btn-info text-white fw-bold shadow-sm py-3 rounded-pill">
-                            <i class="fas fa-truck me-2"></i> Bắt đầu giao hàng
-                        </button>
-                        <button type="submit" name="status" value="pending" class="btn btn-outline-secondary rounded-pill py-2" onclick="return confirm('Bạn muốn hoàn tác về trạng thái Chờ xử lý?')">
-                            <i class="fas fa-undo me-1"></i> Quay lại chờ xử lý
-                        </button>
-                    </div>
+                        <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
+                            @csrf
+                            <div class="d-grid gap-3">
+                                <button type="submit" name="status" value="shipping" class="btn btn-info text-white fw-bold shadow-sm py-3 rounded-pill">
+                                    <i class="fas fa-truck me-2"></i> Bắt đầu giao hàng
+                                </button>
+                                <button type="submit" name="status" value="pending" class="btn btn-outline-secondary rounded-pill py-2" onclick="return confirm('Bạn muốn hoàn tác về trạng thái Chờ xử lý?')">
+                                    <i class="fas fa-undo me-1"></i> Quay lại chờ xử lý
+                                </button>
+                            </div>
+                        </form>
 
-                    {{-- TRẠNG THÁI: ĐANG GIAO --}}
+                    {{-- 3. TRẠNG THÁI: ĐANG GIAO --}}
                     @elseif($order->status == 'shipping')
-                    <div class="d-grid gap-3 mb-3">
-                        <button type="submit" name="status" value="completed" class="btn btn-success fw-bold shadow-sm py-3 rounded-pill">
-                            <i class="fas fa-check-double me-2"></i> Xác nhận giao thành công
-                        </button>
-                        <button type="submit" name="status" value="confirmed" class="btn btn-outline-warning text-dark rounded-pill py-2" onclick="return confirm('Đơn hàng chưa được giao? Bạn muốn quay lại trạng thái Đã xác nhận?')">
-                            <i class="fas fa-undo me-1"></i> Giao chậm / Quay lại
-                        </button>
-                    </div>
-                </form>
+                        <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
+                            @csrf
+                            <div class="d-grid gap-3 mb-3">
+                                <button type="submit" name="status" value="completed" class="btn btn-success fw-bold shadow-sm py-3 rounded-pill">
+                                    <i class="fas fa-check-double me-2"></i> Xác nhận giao thành công
+                                </button>
+                                <button type="submit" name="status" value="confirmed" class="btn btn-outline-warning text-dark rounded-pill py-2" onclick="return confirm('Đơn hàng chưa được giao? Bạn muốn quay lại trạng thái Đã xác nhận?')">
+                                    <i class="fas fa-undo me-1"></i> Giao chậm / Quay lại
+                                </button>
+                            </div>
+                        </form>
 
-                {{-- NÚT BÁO BOM HÀNG --}}
-                <form action="{{ route('admin.orders.bom_hang', $order->id) }}" method="POST" class="d-grid gap-2 mt-3 pt-3 border-top border-light">
-                    @csrf
-                    <button type="submit" class="btn btn-danger fw-bold shadow-sm py-3 rounded-pill" onclick="return confirm('XÁC NHẬN KHÁCH BOM HÀNG? \n\nHệ thống sẽ tự động:\n1. Hoàn lại số lượng sách vào kho\n2. Trừ đi số lượt đã bán\n3. Trả lại Voucher cho hệ thống (nếu có)\n\nLưu ý: Thao tác này không thể hoàn tác!');">
-                        <i class="fas fa-bomb me-2"></i> Khách Bom Hàng / Từ chối nhận
-                    </button>
-                </form>
+                        {{-- NÚT BOM HÀNG NẰM Ở ĐÂY LÀ HỢP LÝ NHẤT --}}
+                        <form action="{{ route('admin.orders.bom_hang', $order->id) }}" method="POST" class="d-grid gap-2 mt-3 pt-3 border-top border-light">
+                            @csrf
+                            <button type="submit" class="btn btn-danger fw-bold shadow-sm py-3 rounded-pill" onclick="return confirm('XÁC NHẬN KHÁCH BOM HÀNG? \n\nHệ thống sẽ tự động:\n1. Hoàn lại số lượng sách vào kho\n2. Trừ đi số lượt đã bán\n3. Trả lại Voucher cho hệ thống (nếu có)\n\nLưu ý: Thao tác này không thể hoàn tác!');">
+                                <i class="fas fa-bomb me-2"></i> Khách Bom Hàng / Từ chối nhận
+                            </button>
+                        </form>
 
-                <form style="display:none;">
+                    {{-- 4. TRẠNG THÁI: ĐÃ HỦY / BOM HÀNG --}}
+                    @elseif(in_array($order->status, ['cancelled', 'bom_hang', 4]))
+                        <div class="alert alert-light border text-center mb-0 text-muted rounded-4 py-3">
+                            <i class="fas fa-lock me-2"></i> Đơn hàng đã đóng
+                        </div>
 
-                    {{-- TRẠNG THÁI: ĐÃ HỦY / BOM HÀNG --}}
-                    @elseif($order->status == 'cancelled' || $order->status == 'bom_hang' || $order->status == 4)
-                    <div class="alert alert-light border text-center mb-0 text-muted rounded-4 py-3">
-                        <i class="fas fa-lock me-2"></i> Đơn hàng đã đóng
-                    </div>
-                    {{-- TRẠNG THÁI: HOÀN THÀNH --}}
+                    {{-- 5. TRẠNG THÁI: HOÀN THÀNH --}}
                     @else
-                    <div class="alert alert-success bg-opacity-10 border border-success text-center mb-0 text-success fw-bold rounded-4 py-3">
-                        <i class="fas fa-check-circle me-2"></i> Đơn hàng đã hoàn tất
-                    </div>
+                        <div class="alert alert-success bg-opacity-10 border border-success text-center mb-0 text-success fw-bold rounded-4 py-3">
+                            <i class="fas fa-check-circle me-2"></i> Đơn hàng đã hoàn tất
+                        </div>
                     @endif
-                </form>
-
-                {{-- Nút Hủy Đơn --}}
-                @if(!in_array($order->status, ['completed', 'cancelled', 'bom_hang', 2, 3, 4]))
-                <div class="mt-4 pt-4 border-top border-light">
-                    <form action="{{ route('orders.outOfStock', $order->id) }}" method="POST" onsubmit="return confirm('CẢNH BÁO: Hành động này sẽ hủy đơn hàng. Bạn có chắc chắn không?');">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-danger w-100 rounded-pill py-2">
-                            <i class="fas fa-times me-2"></i> Hủy đơn / Báo hết hàng
-                        </button>
-                    </form>
-                </div>
-                @endif
 
                 @else
-                <div class="alert alert-secondary text-center small m-0 border-0 bg-light text-muted rounded-4 p-4">
-                    <i class="fas fa-eye fa-2x mb-3 text-secondary opacity-50"></i>
-                    <br>Bạn đang ở chế độ <strong>Chỉ xem</strong>. <br> Không có quyền thay đổi trạng thái đơn hàng.
-                </div>
+                    {{-- GIAO DIỆN CHỈ XEM (GIÁM ĐỐC / ADMIN) --}}
+                    <div class="alert alert-secondary text-center small m-0 border-0 bg-light text-muted rounded-4 p-4">
+                        <i class="fas fa-eye fa-2x mb-3 text-secondary opacity-50"></i>
+                        <br>Bạn đang ở chế độ <strong>Chỉ xem</strong>. <br> Không có quyền thay đổi trạng thái đơn hàng.
+                    </div>
                 @endif
+
             </div>
         </div>
     </div>

@@ -33,6 +33,11 @@
                     </li>
                     <li class="mb-2">
                         <a href="{{ route('client.account.history') }}" class="text-decoration-none footer-link fw-medium">
+                            <i class="fas fa-chevron-right me-2 small"></i>Lịch sử mua hàng
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ route('orders.track') }}" class="text-decoration-none footer-link fw-medium">
                             <i class="fas fa-chevron-right me-2 small"></i>Tra cứu đơn hàng
                         </a>
                     </li>

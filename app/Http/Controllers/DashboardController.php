@@ -86,8 +86,9 @@ class DashboardController extends Controller
         // D. Sách sắp hết hàng
         $lowStockBooks = Book::where('quantity', '<', 10)
             ->orderBy('quantity', 'asc')
-            ->limit(5)
+            ->limit(7)
             ->get();
+            $totalLowStockBooks = Book::where('quantity', '<', 10)->count();
 
         // E. Top 5 sách bán chạy (Đồng bộ số liệu từ bảng Books & Kèm tính Sao đánh giá)
         $topBooks = \App\Models\Book::orderBy('total_sold', 'desc')
@@ -97,9 +98,10 @@ class DashboardController extends Controller
             ->get();
 
         // ==============================================================
-        // 3. BIỂU ĐỒ DOANH THU (Đã đồng bộ logic Ebook và Sách giấy)
+        // 3. BIỂU ĐỒ DOANH THU (Nâng lên 30 ngày)
         // ==============================================================
-        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $days = 30; // Thay vì 7 ngày, nâng lên 30 ngày cho biểu đồ đẹp mắt và tổng quan hơn
+        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
 
         // Doanh thu Ebook theo ngày
         $dailyEbook = DB::table('order_details')
@@ -132,8 +134,8 @@ class DashboardController extends Controller
         $labels = [];
         $data = [];
 
-        // Gộp data của 7 ngày lại
-        for ($i = 6; $i >= 0; $i--) {
+        // Gộp data của 30 ngày lại
+        for ($i = $days - 1; $i >= 0; $i--) {
             $dateStr = Carbon::now()->subDays($i)->format('Y-m-d');
             $displayDate = Carbon::now()->subDays($i)->format('d/m');
 
@@ -144,7 +146,6 @@ class DashboardController extends Controller
             $labels[] = $displayDate;
             $data[] = max(0, $eRev + $pRev + $exRev); // Cộng dồn các món lại
         }
-
         // ==============================================================
         // 4. BIỂU ĐỒ TRÒN (TRẠNG THÁI ĐƠN HÀNG)
         // ==============================================================
@@ -152,18 +153,19 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->get();
 
-        $statusCounts = [0, 0, 0, 0];
+        $statusCounts = [0, 0, 0, 0, 0]; // Đổi thành 5 phần tử
 
         foreach ($statusData as $item) {
             if ($item->status == 0 || $item->status == 'pending') {
-                $statusCounts[0] += $item->total;
+                $statusCounts[0] += $item->total; // Chờ xử lý
             } elseif ($item->status == 1 || $item->status == 'confirmed' || $item->status == 'shipping') {
-                // Tớ gộp chung Đang giao vào phần Xác nhận trên biểu đồ để dễ nhìn
-                $statusCounts[1] += $item->total;
+                $statusCounts[1] += $item->total; // Đã xác nhận / Đang giao
             } elseif ($item->status == 2 || $item->status == 'completed') {
-                $statusCounts[2] += $item->total;
-            } elseif ($item->status == 'cancelled' || $item->status == 'bom_hang' || $item->status == 4) {
-                $statusCounts[3] += $item->total;
+                $statusCounts[2] += $item->total; // Thành công
+            } elseif ($item->status == 'cancelled' || $item->status == 3) {
+                $statusCounts[3] += $item->total; // Đã hủy (Khách tự hủy)
+            } elseif ($item->status == 'bom_hang' || $item->status == 4) {
+                $statusCounts[4] += $item->total; // Bom hàng (Từ chối nhận)
             }
         }
 
@@ -186,7 +188,79 @@ class DashboardController extends Controller
             'totalOrders',
             'totalUsers',
             'lowStockBooks',
+            'totalLowStockBooks',
             'topBooks'
         ));
+    }
+    // ==============================================================
+    // 6. XEM CHI TIẾT DOANH THU LỌC THEO NGÀY
+    // ==============================================================
+    public function revenueDetails(Request $request)
+    {
+        // Kiểm tra quyền (chỉ Giám đốc hoặc Admin mới được xem)
+        $role = Auth::user()->role;
+        if (!in_array($role, [0, 1])) { // Giả sử 1 là Giám đốc
+            return redirect()->back()->with('error', 'Bạn không có quyền truy cập trang này.');
+        }
+
+        // Lấy ngày lọc từ request (Mặc định là tháng hiện tại)
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+
+        // Lấy danh sách các đơn hàng đã Hoàn Thành trong khoảng thời gian này
+        $orders = Order::whereIn('status', ['completed', '2', '3'])
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20); // Phân trang cho đẹp
+
+        // Tính tổng tiền của khoảng thời gian này
+        $totalFilteredRevenue = Order::whereIn('status', ['completed', '2', '3'])
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->sum('total_price');
+
+        return view('admin.revenue.details', compact('orders', 'startDate', 'endDate', 'totalFilteredRevenue'));
+    }
+
+    // ==============================================================
+    // 7. XUẤT FILE EXCEL BÁO CÁO DOANH THU
+    // ==============================================================
+    public function exportExcel(Request $request)
+    {
+        // Nhận dữ liệu ngày tháng (Có thể rỗng nếu bấm từ ngoài Dashboard)
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Đặt tên file thông minh theo trường hợp
+        if ($startDate && $endDate) {
+            $fileName = 'Bao_Cao_Doanh_Thu_Thelwc_' . $startDate . '_den_' . $endDate . '.xlsx';
+        } else {
+            $fileName = 'Bao_Cao_Doanh_Thu_Thelwc_Toan_Bo.xlsx';
+        }
+
+        // Gọi class Export
+        return \Excel::download(new \App\Exports\RevenueExport($startDate, $endDate), $fileName);
+    }
+    // ==============================================================
+    // 8. XEM DANH SÁCH TẤT CẢ SÁCH SẮP HẾT HÀNG
+    // ==============================================================
+    public function urgentBooks()
+    {
+        // Lấy sách < 10 cuốn, ưu tiên thằng nào ít nhất lên đầu và phân trang 15 cuốn/trang
+        $books = Book::where('quantity', '<', 10)
+                     ->orderBy('quantity', 'asc')
+                     ->paginate(20);
+
+        // Trả về một view mới (cậu nhớ tạo file view này nhé)
+        return view('admin.books.urgent_list', compact('books'));
+    }
+    // ==============================================================
+    // 9. XUẤT EXCEL DANH SÁCH SÁCH SẮP HẾT HÀNG
+    // ==============================================================
+    public function exportUrgentBooks()
+    {
+        $fileName = 'Danh_Sach_Can_Nhap_Gap_' . date('Y_m_d_H_i') . '.xlsx';
+        return \Excel::download(new \App\Exports\UrgentBooksExport, $fileName);
     }
 }

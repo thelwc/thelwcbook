@@ -143,11 +143,32 @@
                                 @endif
                             </div>
                             
-                            {{-- Lượt bán --}}
-                            <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between align-items-center" style="min-height: 25px;">
-                                <small class="text-secondary fw-bold" style="font-size: 11px;">
-                                    <i class="fas fa-fire text-danger me-1"></i>Đã bán: <b class="text-dark">{{ number_format($book->total_sold ?? 0) }}</b>
-                                </small>
+                            {{-- LOGIC THANH TIẾN ĐỘ THỰC TẾ --}}
+                            @php
+                                $daBan = $book->total_sold ?? 0;
+                                $tonKho = $book->quantity ?? 1; // Tránh lỗi chia cho 0 nếu kho rỗng
+                                $tongNhap = $daBan + $tonKho;
+                                
+                                // Tính phần trăm đã bán (tối đa 100%)
+                                $phanTramBan = $tongNhap > 0 ? round(($daBan / $tongNhap) * 100) : 0;
+                                
+                                // Đặt mức min là 5% để thanh tiến độ luôn có một chút màu đỏ cho đẹp
+                                if ($phanTramBan < 5 && $daBan > 0) $phanTramBan = 5;
+                            @endphp
+
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar bg-danger" style="width: {{ $phanTramBan }}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1 mb-2">
+                                @if($tonKho <= 5)
+                                    <small class="text-danger fw-bold animate__animated animate__flash animate__infinite" style="font-size: 0.7rem;">🔥 Sắp hết hàng</small>
+                                @elseif($phanTramBan >= 80)
+                                    <small class="text-danger fw-bold" style="font-size: 0.7rem;">🔥 Bán chạy</small>
+                                @else
+                                    <small class="text-muted" style="font-size: 0.7rem;">Số lượng có hạn</small>
+                                @endif
+                                
+                                <small class="text-muted" style="font-size: 0.7rem;">Đã bán: {{ number_format($daBan) }}</small>
                             </div>
                             
                             {{-- Nút Xem Ngay --}}

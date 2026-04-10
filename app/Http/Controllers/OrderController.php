@@ -74,7 +74,7 @@ class OrderController extends Controller
                 'coupon_code' => $couponCode,
                 'shipping_fee' => $shippingFee,
                 'status' => 'pending', 
-                'user_id' => auth()->id()
+                'user_id' => auth()->check() ? auth()->id() : null
             ]);
 
             foreach($cart as $key => $item) {
@@ -387,4 +387,38 @@ private function sendNotifications($order, $customerEmail)
         \Log::error("Lỗi gửi thông báo/mail: " . $e->getMessage());
     }
 }
+// 1. Hiển thị trang Form tra cứu
+    public function trackOrder()
+    {
+        return view('client.pages.track_order');
+    }
+
+    // 2. Xử lý tìm kiếm đơn hàng
+    public function trackOrderPost(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|numeric',
+            'contact_info' => 'required'
+        ], [
+            'order_id.required' => 'Vui lòng nhập mã đơn hàng.',
+            'order_id.numeric' => 'Mã đơn hàng phải là số.',
+            'contact_info.required' => 'Vui lòng nhập Email hoặc Số điện thoại.'
+        ]);
+
+        // Tìm đơn hàng khớp ID và (Email HOẶC Số điện thoại)
+        $order = \App\Models\Order::with('details.book') // Load luôn sách trong đơn
+            ->where('id', $request->order_id)
+            ->where(function($query) use ($request) {
+                $query->where('email', $request->contact_info)
+                      ->orWhere('phone', $request->contact_info);
+            })
+            ->first();
+
+        if (!$order) {
+            return redirect()->back()->with('error', 'Không tìm thấy đơn hàng! Vui lòng kiểm tra lại Mã đơn và Thông tin liên hệ.');
+        }
+
+        // Nếu tìm thấy, trả về lại trang đó kèm data đơn hàng
+        return view('client.pages.track_order', compact('order'));
+    }
 }

@@ -238,15 +238,22 @@
 
                 </div>
 
-                {{-- CỘT PHẢI: TỔNG TIỀN & THANH TOÁN (Giữ nguyên logic của cậu) --}}
+                {{-- CỘT PHẢI: TỔNG TIỀN & THANH TOÁN --}}
                 <div class="col-lg-4">
                     <div class="card-custom p-4 sticky-top" style="top: 100px; z-index: 1;">
                         <h5 class="fw-bold mb-4 border-bottom pb-3"><i class="fas fa-receipt text-primary me-2"></i>Cộng giỏ hàng</h5>
                         
                         @php
                             $tongGiaGoc = 0;
+                            $coEbook = false; // 🔥 Thêm biến radar quét Ebook
+
                             if(session('cart')) {
                                 foreach(session('cart') as $id => $details) {
+                                    // Kiểm tra xem món hàng này có phải ebook không
+                                    if(isset($details['type']) && $details['type'] == 'ebook') {
+                                        $coEbook = true; 
+                                    }
+
                                     $bookInDb = \App\Models\Book::find($details['id']);
                                     $originalPrice = (isset($details['type']) && $details['type'] == 'ebook') 
                                                         ? ($bookInDb->ebook_price ?? $details['price']) 
@@ -322,15 +329,21 @@
                             <span class="fs-3 fw-bold text-danger">{{ number_format($finalTotal) }} đ</span>
                         </div>
 
-                        @auth
-                            <a href="{{ route('checkout') }}" class="btn btn-dark-brand w-100 py-3 rounded-pill fw-bold text-uppercase mb-2 shadow-sm d-flex align-items-center justify-content-center">
-                                Thanh toán ngay <i class="fas fa-arrow-right ms-2"></i>
-                            </a>
-                        @else
+                        {{-- 🔥 RÀNG BUỘC EBOOK Ở ĐÂY 🔥 --}}
+                        @if($coEbook && !Auth::check())
+                            <div class="alert alert-warning small text-center rounded-3 border-0 shadow-sm mb-3">
+                                <i class="fas fa-exclamation-triangle me-1 text-warning"></i> Giỏ hàng chứa <b>Ebook</b>. Bắt buộc phải <a href="{{ route('login') }}" class="fw-bold text-dark">Đăng nhập</a> để hệ thống lưu sách vào thư viện của cậu sau khi mua!
+                            </div>
                             <a href="{{ route('login') }}" class="btn btn-danger w-100 py-3 rounded-pill fw-bold text-uppercase mb-2 shadow-sm d-flex align-items-center justify-content-center">
                                 <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập để thanh toán
                             </a>
-                        @endauth
+                        @else
+                            {{-- Bình thường: Đã đăng nhập HOẶC Khách vãng lai chỉ mua sách giấy --}}
+                            <a href="{{ route('checkout') }}" class="btn btn-dark-brand w-100 py-3 rounded-pill fw-bold text-uppercase mb-2 shadow-sm d-flex align-items-center justify-content-center">
+                                Thanh toán ngay <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        @endif
+                        
                     </div>
                 </div>
             </div>
