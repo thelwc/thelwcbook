@@ -100,21 +100,20 @@ class LoginController extends Controller
             $googleUser = Socialite::driver('google')->user();
             $user = User::where('google_id', $googleUser->id)->first();
 
+            // --- PHẦN 1: XỬ LÝ TẠO/CẬP NHẬT TÀI KHOẢN ---
             if ($user) {
-                // Nếu avatar đang trống, thì lấy lại ảnh Google
+                // Trường hợp 1: Khách cũ ĐÃ liên kết Google từ trước
                 if (empty($user->avatar)) {
                     $user->avatar = $googleUser->avatar;
                     $user->save();
                 }
-                
-                // Mặc định cho phép ghi nhớ khi đăng nhập bằng Google luôn
                 Auth::login($user, true); 
-                return redirect()->route('home');
 
             } else {
                 $existingUser = User::where('email', $googleUser->email)->first();
 
                 if ($existingUser) {
+                    // Trường hợp 2: Khách cũ, trùng email nhưng LẦN ĐẦU bấm đăng nhập Google
                     $existingUser->google_id = $googleUser->id; 
                     if (empty($existingUser->avatar)) {
                         $existingUser->avatar = $googleUser->avatar;
@@ -122,19 +121,39 @@ class LoginController extends Controller
                     $existingUser->save();
                     Auth::login($existingUser, true);
                 } else {
+                    // Trường hợp 3: Khách mới hoàn toàn
                     $newUser = User::create([
                         'name' => $googleUser->name,
                         'email' => $googleUser->email,
                         'google_id' => $googleUser->id,
                         'password' => bcrypt(Str::random(16)),
                         'avatar' => $googleUser->avatar,
-                        'role' => 5,
+                        'role' => 5, // Luôn mặc định là Khách hàng
                     ]);
                     Auth::login($newUser, true);
                 }
-                
-                return redirect()->route('home');
             }
+            
+            // --- PHẦN 2: LOGIC CHUYỂN HƯỚNG DỰA VÀO ROLE (CHỐNG LỖI CHO ADMIN) ---
+            $role = Auth::user()->role;
+
+            // Nếu là Admin / Nhân viên -> Trả về trang quản trị
+            if ($role == 0) return redirect()->route('users.index');
+            if ($role == 1 || $role == 2) return redirect()->route('dashboard');
+            if ($role == 3) return redirect()->route('orders.index');
+            if ($role == 4) return redirect()->route('admin.posts.index');
+
+            // 🔥 NẾU LÀ KHÁCH HÀNG (BẤT KỂ CŨ HAY MỚI) -> TRẢ VỀ TRANG ĐANG XEM DỞ 🔥
+            if ($role == 5) {
+                // Lấy link cũ (nếu không có thì về home)
+                $linkChuyenHuong = session('url_truoc_do', route('home'));
+                session()->forget('url_truoc_do'); // Xóa nhớ để dọn dẹp
+                
+                return redirect($linkChuyenHuong)->with('success', 'Đăng nhập Google thành công!');
+            }
+
+            // Mặc định an toàn
+            return redirect()->route('home');
         
         } catch (\Exception $e) {
             return redirect()->route('login')->with('error', 'Lỗi đăng nhập Google: ' . $e->getMessage());

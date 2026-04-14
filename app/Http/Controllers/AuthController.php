@@ -12,66 +12,58 @@ class AuthController extends Controller
 {
     // 1. Hiện form đăng nhập
     public function showLogin() {
+        // Lưu link trước đó, loại trừ trang login/register
+        $urlTruocDo = url()->previous();
+        if (!str_contains($urlTruocDo, 'login') && !str_contains($urlTruocDo, 'register')) {
+            session(['url_truoc_do' => $urlTruocDo]);
+        }
         return view('auth.login');
     }
 
-    // 2. Xử lý đăng nhập (Giữ nguyên Rate Limit xịn của cậu + Thêm Ghi nhớ + Logic phân luồng)
+    // 2. Xử lý đăng nhập
     public function login(Request $request) {
-        // Validate
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
-        // 🔥 LẤY GIÁ TRỊ TỪ Ô CHECKBOX "GHI NHỚ" 🔥
         $remember = $request->boolean('remember');
-
-        // --- RATE LIMIT (CHỐNG SPAM) ---
         $throttleKey = Str::lower($request->email) . '|' . $request->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             return back()->with('error', "Bạn đã nhập sai quá nhiều. Vui lòng thử lại sau $seconds giây.");
         }
-        // -------------------------------
 
-        // 🔥 KIỂM TRA ĐĂNG NHẬP: NHỚ TRUYỀN BIẾN $remember VÀO 🔥
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember)) {
             
-            // Thành công -> Xóa bộ đếm lỗi
             RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
 
-            // --- BẮT ĐẦU LOGIC CHIA LUỒNG MỚI (THEO SỐ) ---
             $role = Auth::user()->role;
 
-            // 1. Admin (0) -> Về quản lý User
-            if ($role == 0) {
-                return redirect()->route('users.index');
+            // 1. Admin (0)
+            if ($role == 0) return redirect()->route('users.index');
+            // 2. Giám đốc (1) & Quản lý (2)
+            if ($role == 1 || $role == 2) return redirect()->route('dashboard');
+            // 3. Nhân viên (3)
+            if ($role == 3) return redirect()->route('orders.index');
+            // 4. Kiểm duyệt (4)
+            if ($role == 4) return redirect()->route('admin.posts.index');
+
+            // 5. 🔥 KHÁCH HÀNG (5): ÁP DỤNG TRẢ VỀ TRANG CŨ 🔥
+            if ($role == 5) {
+                // Lấy link cũ (nếu có), không có thì mặc định về home
+                $linkChuyenHuong = session('url_truoc_do', route('home'));
+                session()->forget('url_truoc_do'); // Xóa nhớ
+                
+                return redirect($linkChuyenHuong)->with('success', 'Đăng nhập thành công!');
             }
 
-            // 2. Giám đốc (1) & Quản lý (2) -> Về Dashboard
-            if ($role == 1 || $role == 2) {
-                return redirect()->route('dashboard');
-            }
-
-            // 3. Nhân viên (3) -> Về Đơn hàng
-            if ($role == 3) {
-                return redirect()->route('orders.index');
-            }
-
-            // 4. Kiểm duyệt (4) -> Về Tin tức
-            if ($role == 4) {
-                return redirect()->route('admin.posts.index');
-            }
-
-            // 5. Khách hàng (5) hoặc khác -> Về trang chủ mua sách
             return redirect()->route('home');
-            // --- KẾT THÚC LOGIC ---
         }
 
-        // Thất bại -> Tăng lỗi
-        RateLimiter::hit($throttleKey, 300); // Khóa 5 phút (300s) nếu sai nhiều
+        RateLimiter::hit($throttleKey, 300);
         $retriesLeft = RateLimiter::retriesLeft($throttleKey, 5);
 
         return back()->with('error', "Email hoặc mật khẩu không đúng! Bạn còn $retriesLeft lần thử.");

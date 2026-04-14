@@ -130,8 +130,12 @@
         <div class="container">
 
             {{-- LOGO --}}
-            <a class="navbar-brand me-lg-4" href="{{ route('home') }}">
-                <h3 class="fw-bold mb-0" style="color: #212529;">Thelwc Books</h3>
+            <a class="navbar-brand me-lg-4 d-flex align-items-center" href="{{ route('home') }}">
+                {{-- Ảnh Logo --}}
+                <img src="{{ asset('images/logo.png') }}" alt="Thelwc Books Logo" class="me-2" style="height: 45px; width: auto; object-fit: contain;">
+                
+                {{-- Chữ Thelwc Books --}}
+                <h3 class="fw-bold mb-0" style="color: #212529;">Thelwc</h3>
             </a>
 
             {{-- MOBILE TOP ICONS --}}
@@ -461,7 +465,7 @@
                             </li>
                             <li>
                                 <a class="dropdown-item text-danger fw-bold" href="#"
-                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    onclick="event.preventDefault(); if(confirm('Bạn có chắc chắn muốn đăng xuất không?')) { document.getElementById('logout-form').submit(); }">
                                     Đăng xuất
                                 </a>
                             </li>

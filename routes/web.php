@@ -62,7 +62,7 @@ Route::middleware(['restrict.staff'])->group(function () {
     Route::get('/book/{id}', [HomeController::class, 'detail'])->name('book.detail');
     Route::get('/search', [HomeController::class, 'search'])->name('search');
     Route::get('/danh-muc/{slug}', [HomeController::class, 'categoryBook'])->name('category.show');
-    Route::get('/sach/{id}', [HomeController::class, 'Detail'])->name('books.detail');
+    //Route::get('/sach/{id}', [HomeController::class, 'Detail'])->name('books.detail');
     Route::get('/ajax-search', [App\Http\Controllers\HomeController::class, 'ajaxSearch'])->name('ajax.search');
     // Tin tức
     Route::get('/tin-tuc', [PostController::class, 'index'])->name('posts.index');

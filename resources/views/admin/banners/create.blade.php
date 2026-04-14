@@ -6,7 +6,6 @@
         <h5 class="mb-0 fw-bold">Thêm Banner Mới</h5>
     </div>
     <div class="card-body">
-        {{-- 🔥 QUAN TRỌNG: Phải có enctype="multipart/form-data" mới upload được ảnh --}}
         <form action="{{ route('banners.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
@@ -16,7 +15,8 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label fw-bold">Mô tả nhỏ (Tùy chọn)</label>
+                <label class="form-label fw-bold">Mô tả nhỏ</label>
+                {{-- Đã thêm required --}}
                 <input type="text" name="description" class="form-control" placeholder="Ví dụ: Khám phá thế giới tri thức...">
             </div>
 
@@ -29,7 +29,8 @@
                     <label class="form-label fw-bold">Đường dẫn khi bấm vào (Link)</label>
                     <div class="input-group shadow-sm">
                         <span class="input-group-text bg-light text-muted"><i class="fas fa-link me-1"></i> Tên_Miền/</span>
-                        <input type="text" name="link" class="form-control" placeholder="VD: minigame hoặc danh-muc/sach-moi">
+                        {{-- Đã thêm required --}}
+                        <input type="text" name="link" class="form-control" placeholder="VD: minigame hoặc danh-muc/sach-moi" required>
                     </div>
                     <small class="text-danger fst-italic" style="font-size: 12px;">* Chỉ nhập phần đuôi (VD: minigame). Không nhập http://127.0.0.1...</small>
                 </div>
@@ -38,7 +39,8 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Thứ tự hiển thị</label>
-                    <input type="number" name="order" class="form-control" value="0">
+                    {{-- Đã thêm required --}}
+                    <input type="number" name="order" class="form-control" value="0" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Trạng thái</label>

@@ -1,6 +1,12 @@
 @extends('admin.layouts.layout')
 
 @section('content')
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-4 fw-bold border-0" role="alert">
+        <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div class="d-flex align-items-center gap-3">
         <a href="{{ url()->previous() }}" class="btn btn-outline-secondary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">

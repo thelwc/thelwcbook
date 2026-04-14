@@ -51,10 +51,25 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script>
-    $('#summernote').summernote({
-        placeholder: 'Nội dung bài viết...',
-        tabsize: 2,
-        height: 400
+    $(document).ready(function() {
+        $('#summernote').summernote({
+            placeholder: 'Nội dung bài viết...',
+            tabsize: 2,
+            height: 400
+        });
+
+        // Bắt sự kiện khi Form được Submit
+        $('form').on('submit', function(e) {
+            // Lấy nội dung chữ (text thuần) bên trong Summernote
+            if ($('#summernote').summernote('isEmpty')) {
+                // Hủy submit form
+                e.preventDefault();
+                // Hiện thông báo lỗi
+                alert('Nội dung bài viết không được để trống!');
+                // Focus lại vào khung soạn thảo
+                $('#summernote').summernote('focus');
+            }
+        });
     });
 </script>
 @endsection

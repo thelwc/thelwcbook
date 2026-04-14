@@ -49,7 +49,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label>Đơn hàng tối thiểu (đ)</label>
-                        <input type="number" name="min_order_amount" class="form-control" value="0">
+                        <input type="number" name="min_order_amount" class="form-control" value="0" required>
                     </div>
                 </div>
 

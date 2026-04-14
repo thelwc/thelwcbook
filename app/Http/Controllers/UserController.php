@@ -47,7 +47,8 @@ class UserController extends Controller
         }
 
         // Sắp xếp, phân trang và dán TOÀN BỘ tham số lọc lên URL để không bị mất khi qua trang 2
-        $users = $query->orderBy('id', 'asc')->paginate(10);
+// Sắp xếp ưu tiên theo Role (0 -> 5) TRƯỚC, nếu cùng Role thì mới xếp theo ID mới nhất
+        $users = $query->orderBy('role', 'asc')->orderBy('id', 'desc')->paginate(10);
         $users->appends($request->all());
 
         return view('admin.users.index', compact('users'));
@@ -57,8 +58,6 @@ class UserController extends Controller
     public function create()
     {
         if (Auth::user()->role != 0) { return redirect()->route('dashboard'); }
-
-        // ❌ Đã xóa lấy danh sách Branch
         return view('admin.users.create');
     }
 
@@ -72,7 +71,12 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
             'role' => 'required|integer',
-            // ❌ Đã xóa validate branch_id
+        ],[
+            // Tùy chỉnh câu chửi... à nhầm, câu thông báo lỗi sang tiếng Việt
+            'email.unique'   => '❌ Email này đã được sử dụng! Vui lòng chọn email khác.',
+            'email.required' => 'Vui lòng nhập địa chỉ email.',
+            'email.email'    => 'Định dạng email không hợp lệ.',
+            'password.min'   => 'Mật khẩu phải có ít nhất 6 ký tự.'
         ]);
 
         User::create([

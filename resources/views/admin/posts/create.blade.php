@@ -40,10 +40,25 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script>
-    $('#summernote').summernote({
-        placeholder: 'Viết nội dung vào đây, có thể copy ảnh từ Word/Web dán vào...',
-        tabsize: 2,
-        height: 400
+    $(document).ready(function() {
+        $('#summernote').summernote({
+            placeholder: 'Viết nội dung vào đây, có thể copy ảnh từ Word/Web dán vào...',
+            tabsize: 2,
+            height: 400
+        });
+
+        // Bắt sự kiện khi Form được Submit
+        $('form').on('submit', function(e) {
+            // Lấy nội dung chữ (text thuần) bên trong Summernote
+            if ($('#summernote').summernote('isEmpty')) {
+                // Hủy submit form
+                e.preventDefault();
+                // Báo lỗi bằng Javascript cơ bản (cậu có thể thay bằng SweetAlert nếu thích)
+                alert('Vui lòng nhập Nội dung bài viết!');
+                // Focus lại vào khung soạn thảo
+                $('#summernote').summernote('focus');
+            }
+        });
     });
 </script>
 @endsection

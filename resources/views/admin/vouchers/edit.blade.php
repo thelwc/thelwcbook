@@ -55,7 +55,7 @@
                     <div class="col-md-4 mb-3">
                         <label class="fw-bold">Đơn hàng tối thiểu (đ)</label>
                         <input type="number" name="min_order_amount" class="form-control" 
-                               value="{{ old('min_order_amount', intval($voucher->min_order_amount)) }}">
+                               value="{{ old('min_order_amount', intval($voucher->min_order_amount)) }}" required>
                     </div>
                 </div>
 
